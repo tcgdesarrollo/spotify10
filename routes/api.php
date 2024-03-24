@@ -3,6 +3,7 @@
 use App\Http\Controllers\AppVersionController;
 use App\Http\Controllers\ChartController;
 use App\Http\Controllers\ChartItemController;
+use App\Http\Controllers\TelegramMessageController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -21,8 +22,8 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 Route::apiResources([
-    'charts'=> ChartController::class,
+    'charts' => ChartController::class,
     'chart-item' => ChartItemController::class,
-    'app-version'=>AppVersionController::class
+    'app-version' => AppVersionController::class,
+    'telegram-message' => TelegramMessageController::class
 ]);
-Route::apiResource('telegram-message',TelegramMessageController::class);

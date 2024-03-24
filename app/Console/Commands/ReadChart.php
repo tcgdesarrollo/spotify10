@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Http\Controllers\TelegramMessageController;
 use App\Models\Chart;
 use App\Models\ChartDate;
 use App\Models\ChartItem;
@@ -54,9 +55,9 @@ class ReadChart extends Command
         $date = str_replace('Week of ', "", $date);
         $date = $this->dateConverter($date, $chart->url);
         $chart_date = ChartDate::firstOrCreate(['date' => $date, 'chart_id' => $chart->id]);
-        if ($chart_date->wasRecentlyCreated()) {
-
-        }
+        if ($chart_date->wasRecentlyCreated) {
+            (new TelegramMessageController())->store("Agregada la lista $chart->name");
+        } else return false;
         $elements->each(function (Crawler $node, $i) use ($chart_date) {
             $position = $node->filter(".c-label")->first()->text();
             $row = $node->filter(".o-chart-results-list-row");

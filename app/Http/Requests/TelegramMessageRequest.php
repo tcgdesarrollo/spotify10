@@ -23,6 +23,7 @@ class TelegramMessageRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'description' => 'required|max:250'
         ];
     }
 }

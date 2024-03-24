@@ -4,47 +4,49 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\TelegramMessageRequest;
 use App\Models\TelegramMessage;
-use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Artisan;
 
 class TelegramMessageController extends Controller
 {
-
-
-
     public function index()
     {
-        $query = TelegramMessage::all();
-        return $this->sendResponse($query);
+        $telegrammessages = TelegramMessage::latest()->get();
+
+        return response(['data' => $telegrammessages], 200);
     }
 
-
-
-    public function store(TelegramMessageRequest $request): Response
+    public function store($message, $priority = 1)
     {
-        $telegram_message = TelegramMessage::create($request->all());
-        return $this->sendResponse($telegram_message->fresh(), 201);
+        if (env('APP_ENV') === 'local') {
+            $message = "(local Arzuaga)" . $message;
+        }
+        TelegramMessage::create([
+            'description' => $message,
+            'priority' => $priority
+        ]);
+        return true;
+
     }
 
-
-    public function show(string $id): Response
+    public function show($id)
     {
-        $telegram_message = TelegramMessage::findOrFail($id);
-        return $this->sendResponse($telegram_message->fresh());
+        $telegrammessage = TelegramMessage::findOrFail($id);
+
+        return response(['data' => $telegrammessage], 200);
     }
 
-
-    public function update(TelegramMessageRequest $request, string $id): Response
+    public function update(TelegramMessageRequest $request, $id)
     {
-        $telegram_message = TelegramMessage::findOrFail($id);
-        $telegram_message->update($request->all());
-        return $this->sendResponse($telegram_message->fresh());
+        $telegrammessage = TelegramMessage::findOrFail($id);
+        $telegrammessage->update($request->all());
+
+        return response(['data' => $telegrammessage], 200);
     }
 
-
-    public function destroy(string $id): Response
+    public function destroy($id)
     {
-        $telegram_message = TelegramMessage::findOrFail($id);
-        $telegram_message->delete();
-        return $this->sendResponse("ok", 204);
+        TelegramMessage::destroy($id);
+
+        return response(['data' => null], 204);
     }
 }

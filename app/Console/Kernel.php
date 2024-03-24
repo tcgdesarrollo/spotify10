@@ -13,6 +13,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
          $schedule->command('app:read-chart')->cron('0 9 * * 2,3');
+         $schedule->command('send:telegram')->cron('* * * * *');
     }
 
     /**
