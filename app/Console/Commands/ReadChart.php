@@ -53,16 +53,13 @@ class ReadChart extends Command
         $date = $crawler->filter('.chart-results p.c-tagline')->first()->text();
         $date = str_replace('Week of ', "", $date);
         $date = $this->dateConverter($date, $chart->id);
-        $this->comment($chart->id .' - '.$date);
-        if (ChartDate::where([['date', $date], ['chart_id', $chart->id]])->exists())
-            return false;
-        else
-            $chart_date = ChartDate::create(['date' => $date, 'chart_id' => $chart->id]);
-
+        $chart_date = ChartDate::firstOrCreate(['date' => $date, 'chart_id' => $chart->id]);
         $elements->each(function (Crawler $node, $i) use ($chart_date) {
             $position = $node->filter(".c-label")->first()->text();
             $row = $node->filter(".o-chart-results-list-row");
-            $title = $row->filter("li.lrv-u-width-100p ul li")->eq(0)->text();
+            $image = $row->filter("li")->filter(".c-lazy-image .lrv-a-crop-1x1")->filter("img")->attr('data-lazy-src');
+            $title = $row->filter("li.lrv-u-width-100p ul li h3")->eq(0)->text();
+            $singer = $row->filter("li.lrv-u-width-100p ul li span")->eq(0)->text();
             $last = $row->filter("li.lrv-u-width-100p ul li")->eq(3)->text();
             $peak = $row->filter("li.lrv-u-width-100p ul li")->eq(4)->text();
             $weeks = $row->filter("li.lrv-u-width-100p ul li")->eq(5)->text();
@@ -76,9 +73,11 @@ class ReadChart extends Command
                     "last_position" => $last,
                     "peak_position" => $peak,
                     "week_on_chart" => $weeks,
+                    "image" => $image,
+                    "singer" => $singer
                 ]
             );
-            $this->comment("$position. $title $last $peak $weeks");
+            $this->comment("$position. $title - $singer ($last $peak $weeks)");
         });
 
     }

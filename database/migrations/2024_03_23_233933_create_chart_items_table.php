@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('last_position')->nullable();
             $table->string('peak_position')->nullable();
             $table->string('week_on_chart')->nullable();
+            $table->string('image')->nullable();
             $table->timestamps();
         });
     }
