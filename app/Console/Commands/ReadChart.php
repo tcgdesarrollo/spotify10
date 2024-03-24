@@ -56,7 +56,7 @@ class ReadChart extends Command
         $date = $this->dateConverter($date, $chart->url);
         $chart_date = ChartDate::firstOrCreate(['date' => $date, 'chart_id' => $chart->id]);
         if ($chart_date->wasRecentlyCreated) {
-            (new TelegramMessageController())->store("Agregada la lista $chart->name");
+            (new TelegramMessageController())->store("Agregada la lista $chart->name para la fecha $date");
         } else return false;
         $elements->each(function (Crawler $node, $i) use ($chart_date) {
             $position = $node->filter(".c-label")->first()->text();
