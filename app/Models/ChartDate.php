@@ -9,7 +9,13 @@ use Illuminate\Database\Eloquent\Model;
 class ChartDate extends Model
 {
     protected $guarded = ['id'];
-    protected $hidden = ['created_at','updated_at'];
+    protected $hidden = ['created_at', 'updated_at'];
 
+
+    public function items()
+    {
+        return $this->hasMany(ChartItem::class);
+
+    }
 
 }
