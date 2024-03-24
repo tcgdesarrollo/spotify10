@@ -5,7 +5,9 @@ namespace App\Console\Commands;
 use App\Models\Chart;
 use App\Models\ChartDate;
 use App\Models\ChartItem;
+use DateTime;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 use SimpleXMLElement;
 use Symfony\Component\BrowserKit\HttpBrowser;
 use Symfony\Component\DomCrawler\Crawler;
@@ -49,6 +51,9 @@ class ReadChart extends Command
     {
         $elements = $crawler->filter('.o-chart-results-list-row-container');
         $date = $crawler->filter('.chart-results p.c-tagline')->first()->text();
+        $date = str_replace('Week of ', "", $date);
+        $date = $this->dateConverter($date, $chart->id);
+        $this->comment($chart->id .' - '.$date);
         if (ChartDate::where([['date', $date], ['chart_id', $chart->id]])->exists())
             return false;
         else
@@ -75,6 +80,27 @@ class ReadChart extends Command
             );
             $this->comment("$position. $title $last $peak $weeks");
         });
+
+    }
+
+    /**
+     * Convierte la fecha a español
+     * @param $fechaString
+     * @param $chart_id
+     * @return string
+     */
+    private function dateConverter($fechaString, $chart_id): string
+    {
+        if ($chart_id < 3) {
+            $fechaObjeto = DateTime::createFromFormat('F d, Y', $fechaString);
+            // Verificar si la conversión fue exitosa
+            if ($fechaObjeto instanceof DateTime) {
+                // Imprimir la fecha en el formato deseado
+                return $fechaObjeto->format('Y-m-d');
+            }
+        }
+        return $fechaString;
+
 
     }
 }
