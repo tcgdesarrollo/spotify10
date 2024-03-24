@@ -48,7 +48,7 @@ class ReadChart extends Command
         return true;
     }
 
-    private function parseBillboard($crawler, $chart)
+    private function parseBillboard($crawler, $chart): void
     {
         $elements = $crawler->filter('.o-chart-results-list-row-container');
         $date = $crawler->filter('.chart-results p.c-tagline')->first()->text();
@@ -57,7 +57,9 @@ class ReadChart extends Command
         $chart_date = ChartDate::firstOrCreate(['date' => $date, 'chart_id' => $chart->id]);
         if ($chart_date->wasRecentlyCreated) {
             (new TelegramMessageController())->store("Agregada la lista $chart->name para la fecha $date");
-        } else return false;
+        } else {
+            return;
+        }
         $elements->each(function (Crawler $node, $i) use ($chart_date) {
             $position = $node->filter(".c-label")->first()->text();
             $row = $node->filter(".o-chart-results-list-row");
