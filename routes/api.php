@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AppVersionController;
 use App\Http\Controllers\ChartController;
 use App\Http\Controllers\ChartItemController;
 use Illuminate\Http\Request;
@@ -21,5 +22,6 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 Route::apiResources([
     'charts'=> ChartController::class,
-    'chart-item' => ChartItemController::class
+    'chart-item' => ChartItemController::class,
+    'app-version'=>AppVersionController::class
 ]);

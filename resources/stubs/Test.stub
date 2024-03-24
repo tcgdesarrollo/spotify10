@@ -1,0 +1,52 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\{{ModelName}};
+use Tests\TestCase;
+
+class {{ModelName}}Test extends TestCase
+{
+    /**
+     * A basic feature test example.
+     */
+    public function test_{{model_lower}}_store(): void
+    {
+        $obj = {{ModelName}}::factory()->make()->toArray();
+        $response_store = $this->post('/api/{{snake_name}}',$obj,$this->getHeaders());
+        $response_store->assertStatus(201);
+        $created = json_decode($response_store->content(), true)['data'];
+        $response = $this->get("/api/{{snake_name}}/".$created['id'],$this->getHeaders());
+        $response->assertStatus(200);
+    }
+
+    public function test_{{model_lower}}_list(): void
+    {
+
+        $response = $this->get('/api/{{snake_name}}', $this->getHeaders());
+        $response->assertStatus(200);
+    }
+
+    public function test_{{model_lower}}_delete(): void
+    {
+        ${{model_lower}} = {{ModelName}}::latest()->first();
+        $response = $this->delete("/api/{{snake_name}}/${{model_lower}}->id", [],$this->getHeaders());
+        $response->assertStatus(204);
+    }
+
+    public function getHeaders(): array
+    {
+        $response = $this->post('/api/auth/login', [
+           'email' => 'user1@hosc.com',
+            'password' => 'Hosc*2023'
+        ], [
+            'Accept' => 'application/json'
+        ]);
+        $result = $response->content();
+        $token = json_decode($result, true)['data'];
+        return [
+            'Authorization' => "Bearer $token",
+            'Accept' => 'application/json'
+        ];
+    }
+}
