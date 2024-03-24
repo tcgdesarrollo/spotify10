@@ -12,9 +12,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call(
+        $this->call([
             ChartSeeder::class,
             VersionSeeder::class
-        );
+        ]);
     }
 }
