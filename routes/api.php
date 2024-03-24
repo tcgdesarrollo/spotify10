@@ -25,3 +25,4 @@ Route::apiResources([
     'chart-item' => ChartItemController::class,
     'app-version'=>AppVersionController::class
 ]);
+Route::apiResource('telegram-message',TelegramMessageController::class);

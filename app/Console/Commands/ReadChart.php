@@ -52,8 +52,11 @@ class ReadChart extends Command
         $elements = $crawler->filter('.o-chart-results-list-row-container');
         $date = $crawler->filter('.chart-results p.c-tagline')->first()->text();
         $date = str_replace('Week of ', "", $date);
-        $date = $this->dateConverter($date, $chart->id);
+        $date = $this->dateConverter($date, $chart->url);
         $chart_date = ChartDate::firstOrCreate(['date' => $date, 'chart_id' => $chart->id]);
+        if ($chart_date->wasRecentlyCreated()) {
+
+        }
         $elements->each(function (Crawler $node, $i) use ($chart_date) {
             $position = $node->filter(".c-label")->first()->text();
             $row = $node->filter(".o-chart-results-list-row");
@@ -85,12 +88,12 @@ class ReadChart extends Command
     /**
      * Convierte la fecha a español
      * @param $fechaString
-     * @param $chart_id
+     * @param $chart_name
      * @return string
      */
-    private function dateConverter($fechaString, $chart_id): string
+    private function dateConverter($fechaString, $chart_name): string
     {
-        if ($chart_id < 3) {
+        if (str_contains($chart_name, 'billboard')) {
             $fechaObjeto = DateTime::createFromFormat('F d, Y', $fechaString);
             // Verificar si la conversión fue exitosa
             if ($fechaObjeto instanceof DateTime) {

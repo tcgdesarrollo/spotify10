@@ -22,7 +22,10 @@ class ChartController extends Controller
 
     public function store(ChartRequest $request): Application|Response|\Illuminate\Contracts\Foundation\Application|ResponseFactory
     {
-        $chart = Chart::create($request->all());
+        $chart = Chart::updateOrCreate(
+            ['url' => $request->url],
+            ['name' => $request->name]
+        );
         return $this->sendResponse($chart->fresh(), 201);
     }
 
