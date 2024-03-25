@@ -87,6 +87,7 @@ class ReadChart extends Command
                     "singer" => $singer
                 ]
             );
+            sleep(1);
 
 //            $this->comment("$position. $title - $singer ($last $peak $weeks)");
         });
