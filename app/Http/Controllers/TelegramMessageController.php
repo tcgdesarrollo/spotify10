@@ -17,13 +17,14 @@ class TelegramMessageController extends Controller
 
     public function store($message, $priority = 1)
     {
-        if (env('APP_ENV') === 'local') {
-            $message = "(local Arzuaga)" . $message;
-        }
+
         TelegramMessage::create([
             'description' => $message,
             'priority' => $priority
         ]);
+        if (env('APP_ENV') != 'prod') {
+            Artisan::call('send:telegram');
+        }
         return true;
 
     }

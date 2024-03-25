@@ -9,6 +9,7 @@ use App\Models\ChartItem;
 use DateTime;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use SimpleXMLElement;
 use Symfony\Component\BrowserKit\HttpBrowser;
 use Symfony\Component\DomCrawler\Crawler;
@@ -44,6 +45,9 @@ class ReadChart extends Command
             $crawler = new Crawler($html);
             if (str_contains($chart->url, 'billboard'))
                 $this->parseBillboard($crawler, $chart);
+            elseif (str_contains($chart->url, 'officialcharts')) {
+                $this->parseUk($crawler, $chart);
+            }
         }
         return true;
     }
@@ -106,6 +110,57 @@ class ReadChart extends Command
         }
         return $fechaString;
 
+
+    }
+
+    private function parseUk($crawler, $chart): void
+    {
+        $date = $crawler->filter('section.gutter')->filter('form')->filter('input')->attr('value');
+        $chart_date = ChartDate::firstOrCreate(['date' => $date, 'chart_id' => $chart->id]);
+        if ($chart_date->wasRecentlyCreated) {
+            (new TelegramMessageController())->store("Agregada la lista $chart->name para la fecha $date");
+        } else {
+            return;
+        }
+        $elements = $crawler->filter('.chart-items');
+        $elements->filter('.chart-item')->each(function ($node, $i) use ($chart_date) {
+            $node->filter(".chart-item-content")->each(function ($subn) use ($chart_date) {
+                $position = $subn->filter(".position")->filter("strong")->text();
+                $image = $subn->filter(".chart-image")->filter("img")->attr("src");
+                $title = $subn->filter(".description")->filter("p")->filter("a.chart-name")->filter('span')->last()->text();
+                $singer = $subn->filter(".description")->filter("p")->filter("a.chart-artist")->text();
+                $stats = $subn->filter(".description")->filter(".stats")->filter("ol");
+                $last_week = $stats->filter("li")->eq(0)->text();
+                if (str_contains(Str::lower($last_week), 'new')) {
+                    $last_week = '-';
+                } else {
+                    $last_week = str_replace("LW: ", "", $last_week);
+                    $last_week = str_replace(",", "", $last_week);
+                }
+                $peak = $stats->filter("li")->eq(1)->text();
+                $peak = str_replace("Peak: ", "", $peak);
+                $peak = str_replace(",", "", $peak);
+
+                $weeks = $stats->filter("li")->eq(2)->text();
+                $weeks = str_replace("Weeks: ", "", $weeks);
+                ChartItem::updateOrCreate(
+                    [
+                        'chart_date_id' => $chart_date->id,
+                        'position' => $position
+                    ],
+                    [
+                        "title" => Str::title($title),
+                        "last_position" => $last_week,
+                        "peak_position" => $peak,
+                        "week_on_chart" => $weeks,
+                        "image" => $image,
+                        "singer" => Str::title($singer)
+                    ]
+                );
+
+            });
+//            $this->comment($position->text());
+        });
 
     }
 }
