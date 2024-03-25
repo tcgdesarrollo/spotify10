@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class Chart extends Model
@@ -14,7 +15,7 @@ class Chart extends Model
 
     public function dates()
     {
-        return $this->hasMany(ChartDate::class)->take(2);
+        return $this->hasMany(ChartDate::class)->where('date','>', Carbon::now()->subDays(30));
 
     }
 }
