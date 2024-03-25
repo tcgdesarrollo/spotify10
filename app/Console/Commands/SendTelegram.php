@@ -43,8 +43,7 @@ class SendTelegram extends Command
     {
         $messages = TelegramMessage::orderByDesc('priority')->take(20)->get();
         foreach ($messages as $message) {
-            $date = date('H:i', strtotime($message->created_at));
-            $msg = "*($date)*: $message->description";
+            $msg = "$message->description";
             if (env('APP_ENV') != 'prod')
                 $msg = "(PRUEBAS): ". $msg;
             $sended = (new TelegramController())->sendMessage($msg);
