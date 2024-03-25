@@ -37,7 +37,7 @@ class ReadHistory extends Command
             $browser = new HttpBrowser(HttpClient::create());
             if (str_contains($chart->url, 'billboard')) {
                 $raw_url = $chart->url;
-                $cont = 100;
+                $cont = 50;
                 while ($cont > 0) {
                     $first_date = ChartDate::where('chart_id', $chart->id)->orderBy('date')->first()->date;
                     $first_date_parse = Carbon::parse($first_date)->subDays(7)->format('Y-m-d');

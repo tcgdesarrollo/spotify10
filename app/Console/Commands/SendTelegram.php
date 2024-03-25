@@ -41,7 +41,7 @@ class SendTelegram extends Command
      */
     public function handle(): int
     {
-        $messages = TelegramMessage::orderByDesc('priority')->take(20)->get();
+        $messages = TelegramMessage::orderByDesc('created_at')->take(20)->get();
         foreach ($messages as $message) {
             $msg = "$message->description";
             if (env('APP_ENV') != 'prod')
