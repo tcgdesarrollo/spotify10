@@ -58,7 +58,6 @@ class ReadChart extends Command
         $date = $crawler->filter('.chart-results p.c-tagline')->first()->text();
         $date = str_replace('Week of ', "", $date);
         $date = $this->dateConverter($date, $chart->url);
-        Log::debug("date", [$date]);
         $chart_date = ChartDate::firstOrCreate(['date' => $date, 'chart_id' => $chart->id]);
         if ($chart_date->wasRecentlyCreated) {
             (new TelegramMessageController())->store("Agregada la lista $chart->name para la fecha $date");
