@@ -15,7 +15,7 @@ class ChartController extends Controller
 
     public function index(): Application|Response|\Illuminate\Contracts\Foundation\Application|ResponseFactory
     {
-        $query = Chart::all();
+        $query = Chart::where('url','like','%billboard%')->get();
         return $this->sendResponse($query);
     }
 
