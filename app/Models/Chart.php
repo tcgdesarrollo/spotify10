@@ -14,7 +14,7 @@ class Chart extends Model
 
     public function dates()
     {
-        return $this->hasMany(ChartDate::class);
+        return $this->hasMany(ChartDate::class)->take(2);
 
     }
 }

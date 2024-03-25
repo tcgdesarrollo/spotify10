@@ -52,12 +52,13 @@ class ReadChart extends Command
         return true;
     }
 
-    private function parseBillboard($crawler, $chart): void
+    public function parseBillboard($crawler, $chart): void
     {
         $elements = $crawler->filter('.o-chart-results-list-row-container');
         $date = $crawler->filter('.chart-results p.c-tagline')->first()->text();
         $date = str_replace('Week of ', "", $date);
         $date = $this->dateConverter($date, $chart->url);
+        Log::debug("date", [$date]);
         $chart_date = ChartDate::firstOrCreate(['date' => $date, 'chart_id' => $chart->id]);
         if ($chart_date->wasRecentlyCreated) {
             (new TelegramMessageController())->store("Agregada la lista $chart->name para la fecha $date");
@@ -87,7 +88,7 @@ class ReadChart extends Command
                     "singer" => $singer
                 ]
             );
-            $this->comment("$position. $title - $singer ($last $peak $weeks)");
+//            $this->comment("$position. $title - $singer ($last $peak $weeks)");
         });
 
     }
@@ -98,7 +99,7 @@ class ReadChart extends Command
      * @param $chart_name
      * @return string
      */
-    private function dateConverter($fechaString, $chart_name): string
+    public function dateConverter($fechaString, $chart_name): string
     {
         if (str_contains($chart_name, 'billboard')) {
             $fechaObjeto = DateTime::createFromFormat('F d, Y', $fechaString);
@@ -113,12 +114,12 @@ class ReadChart extends Command
 
     }
 
-    private function parseUk($crawler, $chart): void
+    public function parseUk($crawler, $chart): void
     {
         $date = $crawler->filter('section.gutter')->filter('form')->filter('input')->attr('value');
         $chart_date = ChartDate::firstOrCreate(['date' => $date, 'chart_id' => $chart->id]);
         if ($chart_date->wasRecentlyCreated) {
-            (new TelegramMessageController())->store("Agregada la lista $chart->name para la fecha $date");
+            (new TelegramMessageController())->store("Agregada la lista $chart->name para la fecha $date. Solo para usuarios PRO");
         } else {
             return;
         }
