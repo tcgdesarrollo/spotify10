@@ -15,7 +15,7 @@ class Chart extends Model
 
     public function dates()
     {
-        return $this->hasMany(ChartDate::class)->where('date','>', Carbon::now()->subDays(30));
+        return $this->hasMany(ChartDate::class)->orderByDesc('date')->where('date','>', Carbon::now()->subDays(30));
 
     }
 }
