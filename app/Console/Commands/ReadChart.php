@@ -91,10 +91,6 @@ class ReadChart extends Command
 
 //            $this->comment("$position. $title - $singer ($last $peak $weeks)");
         });
-        foreach (ChartItem::where('chart_date_id', $chart_date->id)->orderBy('position')->take(2)->get() as $item) {
-            (new TelegramMessageController())->store("$item->position. $item->title - $item->singer");
-        }
-
     }
 
     /**
