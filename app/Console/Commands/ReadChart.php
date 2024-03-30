@@ -164,4 +164,91 @@ class ReadChart extends Command
         });
 
     }
+
+    public function parsePistacubana($crawler, $chart): void
+    {
+        $elements = $crawler->filter('.side_post.trans_400');
+        $date_full = $crawler->filter(".home_content")->filter('h3')->text();
+        $date = explode("FECHA OFICIAL:", $date_full)[1];
+        $date = explode("ORDENADO", $date)[0];
+        $date = $this->dateConverterPistacubana($date);
+        $this->comment($date);
+        $chart_date = ChartDate::firstOrCreate(['date' => $date, 'chart_id' => $chart->id]);
+        if ($chart_date->wasRecentlyCreated) {
+            (new TelegramMessageController())->store("Agregada la lista $chart->name para la fecha $date");
+        } else {
+//            return;
+        }
+        $elements->each(function ($node, $i) use ($chart_date) {
+            if ($i > 0) {
+                $position = $node->filter('.event_date')->filter('.event_day')->text();
+                $title = $node->filter('.side_post_content')->filter('.side_post_title')->text();
+                $singer = $node->filter('.side_post_content')->filter('.post_meta')->eq(1)->text();
+                $image = "https://www.pistacubana.com/" . $node->filter('img')->attr('src');
+//                $link = $node->filter("i")->filter(".fa.fa-chevron-down")->attr("onclick");
+//                $this->comment($link);
+//                $subdiv = $node->filter("[contains@id,'primary-')]")->text();
+//                $this->comment($subdiv);
+                ChartItem::updateOrCreate(
+                    [
+                        'chart_date_id' => $chart_date->id,
+                        'position' => $position
+                    ],
+                    [
+                        "title" => $title,
+//                    "last_position" => $last,
+//                    "peak_position" => $peak,
+//                    "week_on_chart" => $weeks,
+                        "image" => $image,
+                        "singer" => $singer
+                    ]
+                );
+                $this->comment("$position. $title - $singer");
+
+            }
+        });
+
+//        $date = $crawler->filter('.chart-results p.c-tagline')->first()->text();
+//        $date = str_replace('Week of ', "", $date);
+//        $date = $this->dateConverter($date, $chart->url);
+
+
+//            $this->comment("$position. $title - $singer ($last $peak $weeks)");
+    }
+
+    /**
+     * Convierte la fecha a español
+     * @param $fechaString
+     * @return string
+     */
+    public function dateConverterPistacubana($fechaString): string
+    {
+        $months = [
+            'Enero' => 'January',
+            'Febrero' => 'February',
+            'Marzo' => 'March',
+            'Abril' => 'April',
+            'Mayo' => 'May',
+            'Junio' => 'June',
+            'Julio' => 'July',
+            'Agosto' => 'August',
+            'Septiembre' => 'September',
+            'Octubre' => 'October',
+            'Noviembre' => 'November',
+            'Diciembre' => 'December'
+        ];
+        $date_month = explode('/',$fechaString)[1];
+        $real_month = $months[$date_month];
+        $fechaString = str_replace($date_month,$real_month,$fechaString);
+        $fechaObjeto = date_create_from_format('d/F/Y', $fechaString);
+        Log::debug($fechaObjeto);
+        // Verificar si la conversión fue exitosa
+        if ($fechaObjeto instanceof DateTime) {
+            // Imprimir la fecha en el formato deseado
+            return $fechaObjeto->format('');
+        }
+        return $fechaString;
+
+
+    }
 }

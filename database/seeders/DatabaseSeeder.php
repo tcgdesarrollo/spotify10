@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -14,7 +13,8 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             ChartSeeder::class,
-            VersionSeeder::class
+            VersionSeeder::class,
+            EmisoraSeeder::class
         ]);
     }
 }

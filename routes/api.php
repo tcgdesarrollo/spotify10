@@ -3,6 +3,7 @@
 use App\Http\Controllers\AppVersionController;
 use App\Http\Controllers\ChartController;
 use App\Http\Controllers\ChartItemController;
+use App\Http\Controllers\StationController;
 use App\Http\Controllers\TelegramMessageController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -25,5 +26,6 @@ Route::apiResources([
     'charts' => ChartController::class,
     'chart-item' => ChartItemController::class,
     'app-version' => AppVersionController::class,
-    'telegram-message' => TelegramMessageController::class
+    'telegram-message' => TelegramMessageController::class,
+    'stations' => StationController::class
 ]);
