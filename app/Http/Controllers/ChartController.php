@@ -6,6 +6,7 @@ use App\Http\Requests\ChartRequest;
 use App\Models\Chart;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Foundation\Application;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 class ChartController extends Controller
@@ -13,9 +14,17 @@ class ChartController extends Controller
 
     const relations = ['dates.items'];
 
-    public function index(): Application|Response|\Illuminate\Contracts\Foundation\Application|ResponseFactory
+    public function index(Request $request): Application|Response|\Illuminate\Contracts\Foundation\Application|ResponseFactory
     {
-        $query = Chart::where('url','like','%billboard%')->get();
+        $request->validate([
+            'type' => 'nullable|max:100'
+        ]);
+        $type = $request->type ?? 'billboard';
+        $me = auth()->user();
+        if (isset($me))
+            $query = Chart::all();
+        else
+            $query = Chart::where('url', 'like', "%$type%")->get();
         return $this->sendResponse($query);
     }
 

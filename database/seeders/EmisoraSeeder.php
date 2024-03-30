@@ -15,7 +15,7 @@ class EmisoraSeeder extends Seeder
         $stations = [
             [
                 "title" => "Radio Bayamo",
-                "subtitle" => "Radio Bayamo",
+                "subtitle" => "24 horas",
                 "audio" => "https://icecast.teveo.cu/7hdNcTbM",
                 "buyUrl" => "",
                 "downloadUrl" => "",
