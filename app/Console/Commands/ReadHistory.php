@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Http\Controllers\TelegramMessageController;
 use App\Models\Chart;
 use App\Models\ChartDate;
 use Carbon\Carbon;
@@ -30,14 +31,15 @@ class ReadHistory extends Command
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle(): void
     {
+        (new TelegramMessageController())->store("Comenzando a recordar las listas de años anteriores");
         $charts = Chart::all();
         foreach ($charts as $chart) {
             $browser = new HttpBrowser(HttpClient::create());
             if (str_contains($chart->url, 'billboard')) {
                 $raw_url = $chart->url;
-                $cont = 50;
+                $cont = 10;
                 while ($cont > 0) {
                     $first_date = ChartDate::where('chart_id', $chart->id)->orderBy('date')->first()->date;
                     $first_date_parse = Carbon::parse($first_date)->subDays(7)->format('Y-m-d');

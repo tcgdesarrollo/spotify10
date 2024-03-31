@@ -47,6 +47,8 @@ class ReadChart extends Command
                 $this->parseBillboard($crawler, $chart);
             elseif (str_contains($chart->url, 'officialcharts')) {
                 $this->parseUk($crawler, $chart);
+            } elseif (str_contains($chart->url, 'pistacubana')) {
+                $this->parsePistacubana($crawler, $chart);
             }
         }
         return true;
@@ -88,9 +90,21 @@ class ReadChart extends Command
                 ]
             );
             sleep(1);
-
 //            $this->comment("$position. $title - $singer ($last $peak $weeks)");
         });
+        $this->messagePositions($chart_date);
+
+    }
+
+    public function messagePositions($chart_date): void
+    {
+        $positions = ChartItem::where([['chart_date_id', $chart_date->id], ['position', '<=', 3]])->get();
+        $chart_date = $chart_date->fresh();
+        $message = $chart_date->fullname . " \n";
+        foreach ($positions as $position) {
+            $message .= $position->fulltitle . " \n";
+        }
+        (new TelegramMessageController())->store($message);
     }
 
     /**
@@ -160,9 +174,10 @@ class ReadChart extends Command
                 );
 
             });
+
 //            $this->comment($position->text());
         });
-
+        $this->messagePositions($chart_date);
     }
 
     public function parsePistacubana($crawler, $chart): void
@@ -203,9 +218,8 @@ class ReadChart extends Command
                         "singer" => $singer
                     ]
                 );
-                $this->comment("$position. $title - $singer");
-
             }
+            $this->messagePositions($chart_date);
         });
 
 //        $date = $crawler->filter('.chart-results p.c-tagline')->first()->text();
@@ -237,9 +251,9 @@ class ReadChart extends Command
             'Noviembre' => 'November',
             'Diciembre' => 'December'
         ];
-        $date_month = explode('/',$fechaString)[1];
+        $date_month = explode('/', $fechaString)[1];
         $real_month = $months[$date_month];
-        $fechaString = str_replace($date_month,$real_month,$fechaString);
+        $fechaString = str_replace($date_month, $real_month, $fechaString);
         $fechaObjeto = date_create_from_format('d/F/Y', $fechaString);
         Log::debug($fechaObjeto);
         // Verificar si la conversión fue exitosa

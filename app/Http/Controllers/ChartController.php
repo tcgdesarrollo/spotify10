@@ -24,7 +24,7 @@ class ChartController extends Controller
         if (isset($me))
             $query = Chart::all();
         else
-            $query = Chart::where('url', 'like', "%$type%")->get();
+            $query = Chart::all();
         return $this->sendResponse($query);
     }
 

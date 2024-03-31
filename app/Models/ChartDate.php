@@ -10,12 +10,26 @@ class ChartDate extends Model
 {
     protected $guarded = ['id'];
     protected $hidden = ['created_at', 'updated_at'];
+    protected $appends = ['fullname'];
 
 
     public function items()
     {
-        return $this->hasMany(ChartItem::class)->where('position','<=',40);
+        return $this->hasMany(ChartItem::class)->where('position', '<=', 40);
 
+    }
+
+    public function chart()
+    {
+        return $this->belongsTo(Chart::class);
+
+    }
+
+    public function getfullnameAttribute()
+    {
+        $name = $this->chart()->first()->name;
+        $name .= " Fecha: " . $this->attributes['date'];
+        return $name;
     }
 
 }
