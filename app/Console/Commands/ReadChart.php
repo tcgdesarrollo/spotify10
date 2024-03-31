@@ -6,6 +6,7 @@ use App\Http\Controllers\TelegramMessageController;
 use App\Models\Chart;
 use App\Models\ChartDate;
 use App\Models\ChartItem;
+use Carbon\Carbon;
 use DateTime;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
@@ -192,7 +193,7 @@ class ReadChart extends Command
         if ($chart_date->wasRecentlyCreated) {
             (new TelegramMessageController())->store("Agregada la lista $chart->name para la fecha $date");
         } else {
-//            return;
+            return;
         }
         $elements->each(function ($node, $i) use ($chart_date) {
             if ($i > 0) {
@@ -219,15 +220,8 @@ class ReadChart extends Command
                     ]
                 );
             }
-            $this->messagePositions($chart_date);
         });
-
-//        $date = $crawler->filter('.chart-results p.c-tagline')->first()->text();
-//        $date = str_replace('Week of ', "", $date);
-//        $date = $this->dateConverter($date, $chart->url);
-
-
-//            $this->comment("$position. $title - $singer ($last $peak $weeks)");
+        $this->messagePositions($chart_date);
     }
 
     /**
@@ -238,28 +232,26 @@ class ReadChart extends Command
     public function dateConverterPistacubana($fechaString): string
     {
         $months = [
-            'Enero' => 'January',
-            'Febrero' => 'February',
-            'Marzo' => 'March',
-            'Abril' => 'April',
-            'Mayo' => 'May',
-            'Junio' => 'June',
-            'Julio' => 'July',
-            'Agosto' => 'August',
-            'Septiembre' => 'September',
-            'Octubre' => 'October',
-            'Noviembre' => 'November',
-            'Diciembre' => 'December'
+            'Enero',
+            'Febrero',
+            'Marzo',
+            'Abril',
+            'Mayo',
+            'Junio',
+            'Julio',
+            'Agosto',
+            'Septiembre',
+            'Octubre',
+            'Noviembre',
+            'Diciembre'
         ];
         $date_month = explode('/', $fechaString)[1];
-        $real_month = $months[$date_month];
-        $fechaString = str_replace($date_month, $real_month, $fechaString);
-        $fechaObjeto = date_create_from_format('d/F/Y', $fechaString);
-        Log::debug($fechaObjeto);
-        // Verificar si la conversión fue exitosa
-        if ($fechaObjeto instanceof DateTime) {
+        $real_month = array_search($date_month, $months);
+        if ($real_month) {
+            $fechaString = str_replace($date_month, $real_month + 1, $fechaString);
+            $fechaObjeto = Carbon::parse($fechaString);
             // Imprimir la fecha en el formato deseado
-            return $fechaObjeto->format('');
+            return $fechaObjeto->format('Y-m-d');
         }
         return $fechaString;
 
