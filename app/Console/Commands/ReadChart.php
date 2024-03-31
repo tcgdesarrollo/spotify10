@@ -181,8 +181,6 @@ class ReadChart extends Command
                 );
 
             });
-
-//            $this->comment($position->text());
         });
         $this->messagePositions($chart_date);
     }
@@ -194,7 +192,6 @@ class ReadChart extends Command
         $date = explode("FECHA OFICIAL:", $date_full)[1];
         $date = explode("ORDENADO", $date)[0];
         $date = $this->dateConverterPistacubana($date);
-        $this->comment($date);
         $chart_date = ChartDate::firstOrCreate(['date' => $date, 'chart_id' => $chart->id]);
         if ($chart_date->wasRecentlyCreated) {
             (new TelegramMessageController())->store("Agregada la lista $chart->name para la fecha $date");
