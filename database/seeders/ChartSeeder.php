@@ -23,7 +23,9 @@ class ChartSeeder extends Seeder
             ["name" => "Billboard Artist 100", "url" => "https://www.billboard.com/charts/artist-100/"],
             ["name" => "UK Official Singles Chart", "url" => "https://www.officialcharts.com/charts/uk-top-40-singles-chart/"],
             ["name" => "UK Official Albums Chart Top 100", "url" => "https://www.officialcharts.com/charts/albums-chart/"],
-            ['name' => 'Pistacubana Top 100', 'url' => 'https://www.pistacubana.com/lista/top100/172024/posicion']
+            ['name' => 'Pistacubana Top 100', 'url' => 'https://www.pistacubana.com/lista/top100/172024/posicion'],
+            ['name' => 'Spotify Top 50', 'url' => 'https://open.spotify.com/playlist/37i9dQZEVXbMDoHDwVN2tF'],
+            ['name' => 'MeddiaTraffic Global Track Chart', 'url' => 'http://www.mediatraffic.de/tracks.htm']
         ];
         foreach ($lists as $item) {
             Chart::updateOrCreate(
