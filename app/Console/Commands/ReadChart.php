@@ -99,7 +99,7 @@ class ReadChart extends Command
             sleep(1);
 //            $this->comment("$position. $title - $singer ($last $peak $weeks)");
         });
-        $this->messagePositions($chart_date);
+//        $this->messagePositions($chart_date);
 
     }
 
@@ -182,7 +182,7 @@ class ReadChart extends Command
 
             });
         });
-        $this->messagePositions($chart_date);
+//        $this->messagePositions($chart_date);
     }
 
     public function parsePistacubana($crawler, $chart): void
@@ -224,7 +224,7 @@ class ReadChart extends Command
                 );
             }
         });
-        $this->messagePositions($chart_date);
+//        $this->messagePositions($chart_date);
     }
 
     /**
@@ -299,7 +299,7 @@ class ReadChart extends Command
             sleep(1);
 //            $this->comment("$position. $title - $singer ($last $peak $weeks)");
         });
-        $this->messagePositions($chart_date);
+//        $this->messagePositions($chart_date);
 
     }
 
@@ -350,7 +350,7 @@ class ReadChart extends Command
             sleep(1);
 //            $this->comment("$position. $title - $singer ($last $peak $weeks)");
         });
-        $this->messagePositions($chart_date);
+//        $this->messagePositions($chart_date);
 
     }
 
