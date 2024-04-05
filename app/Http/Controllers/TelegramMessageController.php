@@ -18,7 +18,7 @@ class TelegramMessageController extends Controller
     public function store($message, $priority = 1)
     {
 
-        TelegramMessage::create([
+        TelegramMessage::updateOrCreate([
             'description' => $message,
             'priority' => $priority
         ]);
