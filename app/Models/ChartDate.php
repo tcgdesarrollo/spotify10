@@ -15,7 +15,7 @@ class ChartDate extends Model
 
     public function items()
     {
-        return $this->hasMany(ChartItem::class)->where('position', '<=', 40);
+        return $this->hasMany(ChartItem::class);
 
     }
 
