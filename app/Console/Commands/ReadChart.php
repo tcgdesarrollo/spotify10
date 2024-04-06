@@ -38,8 +38,8 @@ class ReadChart extends Command
      */
     public function handle()
     {
-//        $charts = Chart::find([12]);
-        $charts = Chart::all();
+        $charts = Chart::find([10]);
+//        $charts = Chart::all();
         foreach ($charts as $chart) {
             $browser = new HttpBrowser(HttpClient::create());
             $browser->request('GET', $chart->url);
@@ -203,6 +203,9 @@ class ReadChart extends Command
                 $position = $node->filter('.event_date')->filter('.event_day')->text();
                 $title = $node->filter('.side_post_content')->filter('.side_post_title')->text();
                 $singer = $node->filter('.side_post_content')->filter('.post_meta')->eq(1)->text();
+                $weeks = $node->filter('.side_post_content')->filter("div")->last()->filter("weeks")->text() ?? null;
+                $last = $node->filter('.side_post_content')->filter("div")->last()->filter("last")->text() ?? null;
+                $peak = $node->filter('.side_post_content')->filter("div")->last()->filter("best")->text() ?? null;
                 $image = "https://www.pistacubana.com/" . $node->filter('img')->attr('src');
 //                $link = $node->filter("i")->filter(".fa.fa-chevron-down")->attr("onclick");
 //                $this->comment($link);
@@ -215,9 +218,9 @@ class ReadChart extends Command
                     ],
                     [
                         "title" => $title,
-//                    "last_position" => $last,
-//                    "peak_position" => $peak,
-//                    "week_on_chart" => $weeks,
+                        "last_position" => $last,
+                        "peak_position" => $peak,
+                        "week_on_chart" => $weeks,
                         "image" => $image,
                         "singer" => $singer
                     ]

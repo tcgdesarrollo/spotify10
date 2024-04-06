@@ -19,10 +19,9 @@ class ChartController extends Controller
         $request->validate([
             'type' => 'nullable|max:100'
         ]);
-        $type = $request->type ?? 'billboard';
-        $me = auth()->user();
-        if (isset($me))
-            $query = Chart::all();
+        $type = $request->type;
+        if (isset($type))
+            $query = Chart::where('name','like',"%$type%")->get();
         else
             $query = Chart::all();
         return $this->sendResponse($query);
