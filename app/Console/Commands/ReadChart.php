@@ -38,8 +38,8 @@ class ReadChart extends Command
      */
     public function handle()
     {
-        $charts = Chart::find([10]);
-//        $charts = Chart::all();
+//        $charts = Chart::find([10]);
+        $charts = Chart::all();
         foreach ($charts as $chart) {
             $browser = new HttpBrowser(HttpClient::create());
             $browser->request('GET', $chart->url);
@@ -58,6 +58,7 @@ class ReadChart extends Command
             }
 
         }
+        ChartDate::where('date', '<', Carbon::now()->subMonths(3))->delete();
         return true;
     }
 
