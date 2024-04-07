@@ -41,6 +41,7 @@ class ReadChart extends Command
 //        $charts = Chart::find([10]);
         $charts = Chart::all();
         foreach ($charts as $chart) {
+            $this->comment("Comenzando con $chart->name");
             $browser = new HttpBrowser(HttpClient::create());
             $browser->request('GET', $chart->url);
             $html = $browser->getResponse();
@@ -252,6 +253,7 @@ class ReadChart extends Command
             'Noviembre',
             'Diciembre'
         ];
+        $fechaString = trim($fechaString);
         $date_month = explode('/', $fechaString)[1];
         $real_month = array_search($date_month, $months);
         if ($real_month) {
