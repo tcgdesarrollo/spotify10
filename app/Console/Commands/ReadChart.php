@@ -52,8 +52,8 @@ class ReadChart extends Command
                 $this->parseUk($crawler, $chart);
             } elseif (str_contains($chart->url, 'pistacubana')) {
                 $this->parsePistacubana($crawler, $chart);
-            } elseif (str_contains($chart->url, 'spotify')) {
-                $this->parseSpotify($crawler, $chart);
+//            } elseif (str_contains($chart->url, 'spotify')) {
+//                $this->parseSpotify($crawler, $chart);
             } elseif (str_contains($chart->url, 'mediatraffic')) {
                 $this->parseMediatraffic($crawler, $chart);
             }
@@ -198,7 +198,7 @@ class ReadChart extends Command
         if ($chart_date->wasRecentlyCreated) {
             (new TelegramMessageController())->store("Agregada la lista $chart->name para la fecha $date");
         } else {
-            return;
+//            return;
         }
         $elements->each(function ($node, $i) use ($chart_date) {
             if ($i > 0) {
@@ -254,11 +254,14 @@ class ReadChart extends Command
             'Diciembre'
         ];
         $fechaString = trim($fechaString);
-        $date_month = explode('/', $fechaString)[1];
+        $exploded = explode('/', $fechaString);
+        $date_month = $exploded[1];
+        //coge el mes por el indice del array de meses
         $real_month = array_search($date_month, $months);
         if ($real_month) {
-            $fechaString = str_replace($date_month, $real_month + 1, $fechaString);
-            $fechaObjeto = Carbon::parse($fechaString);
+            $fechaString2 = $exploded[2] . "/" . $real_month + 1 . "/" . $exploded[0];
+            $this->comment("la fecha es: $fechaString2");
+            $fechaObjeto = Carbon::parse($fechaString2);
             // Imprimir la fecha en el formato deseado
             return $fechaObjeto->format('Y-m-d');
         }
