@@ -260,7 +260,6 @@ class ReadChart extends Command
         $real_month = array_search($date_month, $months);
         if ($real_month) {
             $fechaString2 = $exploded[2] . "/" . $real_month + 1 . "/" . $exploded[0];
-            $this->comment("la fecha es: $fechaString2");
             $fechaObjeto = Carbon::parse($fechaString2);
             // Imprimir la fecha en el formato deseado
             return $fechaObjeto->format('Y-m-d');
