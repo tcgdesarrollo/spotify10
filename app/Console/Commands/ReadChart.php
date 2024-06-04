@@ -40,6 +40,7 @@ class ReadChart extends Command
     {
 //        $charts = Chart::find([10]);
         $charts = Chart::all();
+        $now = Carbon::now();
         foreach ($charts as $chart) {
             $this->comment("Comenzando con $chart->name");
             $browser = new HttpBrowser(HttpClient::create());
@@ -57,10 +58,26 @@ class ReadChart extends Command
             } elseif (str_contains($chart->url, 'mediatraffic')) {
                 $this->parseMediatraffic($crawler, $chart);
             }
-
         }
         ChartDate::where('date', '<', Carbon::now()->subMonths(3))->delete();
+        $new_charts = ChartDate::with('chart')->where('created_at', '>=', $now)->get();
+        $this->sendSongsTelegram($new_charts);
         return true;
+    }
+
+    public function sendSongsTelegram($chartDates): void
+    {
+        foreach ($chartDates as $chartDate) {
+            $songs = ChartItem::where('chart_date_id', $chartDate->id)->orderBy('position')->take(10)->get();
+            $message = "Top 10 de la lista ".$chartDate->chart->name. ': \n';
+            foreach ($songs as $song){
+                $message.= $song->fulltitle.'\n';
+            }
+            Log::debug($message);
+            (new TelegramMessageController())->store($message);
+        }
+
+
     }
 
     public function parseBillboard($crawler, $chart): void
