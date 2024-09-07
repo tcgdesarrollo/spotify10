@@ -53,7 +53,6 @@ class SendTelegram extends Command
             sleep(1);
         }
 
-
         return true;
     }
 }

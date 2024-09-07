@@ -130,7 +130,7 @@ class ReadChart extends Command
         foreach ($positions as $position) {
             $message .= $position->fulltitle . " \n";
         }
-        (new TelegramMessageController())->store($message);
+//        (new TelegramMessageController())->store($message);
     }
 
     /**
