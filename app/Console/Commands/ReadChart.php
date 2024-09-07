@@ -49,6 +49,7 @@ class ReadChart extends Command
                 $html = $browser->getResponse();
                 $crawler = new Crawler($html);
             } catch (\Exception $e) {
+                $this->comment($e->getMessage());
                 continue;
             }
 
@@ -231,6 +232,7 @@ class ReadChart extends Command
                 $last = $node->filter('.side_post_content')->filter("div")->last()->filter("last")->text() ?? null;
                 $peak = $node->filter('.side_post_content')->filter("div")->last()->filter("best")->text() ?? null;
                 $image = "https://www.pistacubana.com/" . $node->filter('img')->attr('src');
+                $this->comment("Insertando la cancion $position $title - $singer");
 //                $link = $node->filter("i")->filter(".fa.fa-chevron-down")->attr("onclick");
 //                $this->comment($link);
 //                $subdiv = $node->filter("[contains@id,'primary-')]")->text();
