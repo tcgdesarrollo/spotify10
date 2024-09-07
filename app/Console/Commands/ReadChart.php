@@ -223,7 +223,7 @@ class ReadChart extends Command
         if ($chart_date->wasRecentlyCreated) {
             (new TelegramMessageController())->store("Agregada la lista $chart->name para la fecha $date");
         }
-        $this->comment("El chart date tiene id ". $chart_date->id);
+        $this->comment("El chart date tiene id ". $chart_date->id ." y sale con fecha". $chart_date->date);
         $elements->each(function ($node, $i) use ($chart_date) {
             if ($i > 0) {
                 $position = $node->filter('.event_date')->filter('.event_day')->text();
