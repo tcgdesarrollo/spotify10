@@ -39,14 +39,19 @@ class ReadChart extends Command
     public function handle()
     {
 //        $charts = Chart::find([10]);
-        $charts = Chart::all();
+        $charts = Chart::latest()->get();
         $now = Carbon::now();
         foreach ($charts as $chart) {
             $this->comment("Comenzando con $chart->name");
             $browser = new HttpBrowser(HttpClient::create());
-            $browser->request('GET', $chart->url);
-            $html = $browser->getResponse();
-            $crawler = new Crawler($html);
+            try {
+                $browser->request('GET', $chart->url);
+                $html = $browser->getResponse();
+                $crawler = new Crawler($html);
+            } catch (\Exception $e) {
+                continue;
+            }
+
             if (str_contains($chart->url, 'billboard'))
                 $this->parseBillboard($crawler, $chart);
             elseif (str_contains($chart->url, 'officialcharts')) {
@@ -55,13 +60,13 @@ class ReadChart extends Command
                 $this->parsePistacubana($crawler, $chart);
 //            } elseif (str_contains($chart->url, 'spotify')) {
 //                $this->parseSpotify($crawler, $chart);
-            } elseif (str_contains($chart->url, 'mediatraffic')) {
-                $this->parseMediatraffic($crawler, $chart);
+//            } elseif (str_contains($chart->url, 'mediatraffic')) {
+//                $this->parseMediatraffic($crawler, $chart);
             }
         }
         ChartDate::where('date', '<', Carbon::now()->subMonths(3))->delete();
-        $new_charts = ChartDate::with('chart')->where('created_at', '>=', $now)->get();
-        $this->sendSongsTelegram($new_charts);
+//        $new_charts = ChartDate::with('chart')->where('created_at', '>=', $now)->get();
+//        $this->sendSongsTelegram($new_charts);
         return true;
     }
 
@@ -69,9 +74,9 @@ class ReadChart extends Command
     {
         foreach ($chartDates as $chartDate) {
             $songs = ChartItem::where('chart_date_id', $chartDate->id)->orderBy('position')->take(10)->get();
-            $message = "Top 10 de la lista ".$chartDate->chart->name. ': \n';
-            foreach ($songs as $song){
-                $message.= $song->fulltitle.'\n';
+            $message = "Top 10 de la lista " . $chartDate->chart->name . ': \n';
+            foreach ($songs as $song) {
+                $message .= $song->fulltitle . '\n';
             }
             Log::debug($message);
             (new TelegramMessageController())->store($message);
