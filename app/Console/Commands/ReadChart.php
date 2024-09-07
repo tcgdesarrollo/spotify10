@@ -217,12 +217,13 @@ class ReadChart extends Command
         $date = explode("FECHA OFICIAL:", $date_full)[1];
         $date = explode("ORDENADO", $date)[0];
         $date = $this->dateConverterPistacubana($date);
-        $chart_date = ChartDate::firstOrCreate(['date' => $date, 'chart_id' => $chart->id]);
+        $chart_date = ChartDate::firstOrCreate([
+            'date' => $date, 'chart_id' => $chart->id]
+        );
         if ($chart_date->wasRecentlyCreated) {
             (new TelegramMessageController())->store("Agregada la lista $chart->name para la fecha $date");
-        } else {
-//            return;
         }
+        $this->comment("El chart date tiene id ". $chart_date->id);
         $elements->each(function ($node, $i) use ($chart_date) {
             if ($i > 0) {
                 $position = $node->filter('.event_date')->filter('.event_day')->text();
