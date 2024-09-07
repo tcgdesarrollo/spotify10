@@ -273,7 +273,7 @@ class ReadChart extends Command
             'Junio',
             'Julio',
             'Agosto',
-            'Septiembre',
+            'Sept',
             'Octubre',
             'Noviembre',
             'Diciembre'
