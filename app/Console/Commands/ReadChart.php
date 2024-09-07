@@ -65,7 +65,7 @@ class ReadChart extends Command
 //                $this->parseMediatraffic($crawler, $chart);
             }
         }
-        ChartDate::where('date', '<', Carbon::now()->subMonths(3))->delete();
+//        ChartDate::where('date', '<', Carbon::now()->subMonths(3))->delete();
 //        $new_charts = ChartDate::with('chart')->where('created_at', '>=', $now)->get();
 //        $this->sendSongsTelegram($new_charts);
         return true;
