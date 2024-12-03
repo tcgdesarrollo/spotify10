@@ -39,7 +39,7 @@ class ReadChart extends Command
     public function handle()
     {
 //        $charts = Chart::find([10]);
-        $charts = Chart::latest()->get();
+        $charts = Chart::all();
         $now = Carbon::now();
         foreach ($charts as $chart) {
             $this->comment("Comenzando con $chart->name");
