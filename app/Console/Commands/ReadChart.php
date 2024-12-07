@@ -147,9 +147,9 @@ class ReadChart extends Command
             $image = $row->filter("li")->filter(".c-lazy-image .lrv-a-crop-1x1")->filter("img")->attr('data-lazy-src');
             $title = $row->filter("li.lrv-u-width-100p ul li h3")->eq(0)->text();
             $singer = $row->filter("li.lrv-u-width-100p ul li span")->eq(0)->text();
-            $last = null;
-            $peak = null;
-            $weeks = null;
+            $last = '-';
+            $peak = '-';
+            $weeks = '-';
             $this->comment("$position. $title - $singer ($last $peak $weeks)");
             if (env('APP_ENV') == 'local' && $position > 15) return true;
 
