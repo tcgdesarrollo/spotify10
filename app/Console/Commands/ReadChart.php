@@ -68,7 +68,7 @@ class ReadChart extends Command
             }
         }
 //        ChartDate::where('date', '<', Carbon::now()->subMonths(3))->delete();
-        $new_charts = ChartDate::with('chart')->where('created_at', '>=', now()->subMinutes(28))->get();
+        $new_charts = ChartDate::with('chart')->where('created_at', '>=', now()->subMinutes(15))->get();
         $this->sendSongsTelegram($new_charts);
         return true;
     }
@@ -76,7 +76,6 @@ class ReadChart extends Command
     public function sendSongsTelegram($chartDates): void
     {
         foreach ($chartDates as $chartDate) {
-            $this->comment("oing");
             $songs = $chartDate->items()->take(10)->get();
             $message = "Top 10 de la lista " . $chartDate->chart->name . ": \n";
             $this->comment($message);
