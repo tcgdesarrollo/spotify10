@@ -38,8 +38,8 @@ class ReadChart extends Command
      */
     public function handle()
     {
-//        $charts = Chart::find([10]);
-        $charts = Chart::all();
+        $charts = Chart::find([13]);
+//        $charts = Chart::all();
         $now = Carbon::now();
         foreach ($charts as $chart) {
             $this->comment("Comenzando con $chart->name");
@@ -53,7 +53,9 @@ class ReadChart extends Command
                 continue;
             }
 
-            if (str_contains($chart->url, 'billboard'))
+            if (str_contains($chart->url, 'year-end'))
+                $this->parseBillboardYearEnd($crawler, $chart);
+            elseif (str_contains($chart->url, 'billboard'))
                 $this->parseBillboard($crawler, $chart);
             elseif (str_contains($chart->url, 'officialcharts')) {
                 $this->parseUk($crawler, $chart);
@@ -66,24 +68,23 @@ class ReadChart extends Command
             }
         }
 //        ChartDate::where('date', '<', Carbon::now()->subMonths(3))->delete();
-//        $new_charts = ChartDate::with('chart')->where('created_at', '>=', $now)->get();
-//        $this->sendSongsTelegram($new_charts);
+        $new_charts = ChartDate::with('chart')->where('created_at', '>=', now()->subMinutes(28))->get();
+        $this->sendSongsTelegram($new_charts);
         return true;
     }
 
     public function sendSongsTelegram($chartDates): void
     {
         foreach ($chartDates as $chartDate) {
-            $songs = ChartItem::where('chart_date_id', $chartDate->id)->orderBy('position')->take(10)->get();
-            $message = "Top 10 de la lista " . $chartDate->chart->name . ': \n';
+            $this->comment("oing");
+            $songs = $chartDate->items()->take(10)->get();
+            $message = "Top 10 de la lista " . $chartDate->chart->name . ": \n";
+            $this->comment($message);
             foreach ($songs as $song) {
-                $message .= $song->fulltitle . '\n';
+                $message .= $song->fulltitle . "\n";
             }
-            Log::debug($message);
             (new TelegramMessageController())->store($message);
         }
-
-
     }
 
     public function parseBillboard($crawler, $chart): void
@@ -123,6 +124,51 @@ class ReadChart extends Command
             );
             sleep(1);
 //            $this->comment("$position. $title - $singer ($last $peak $weeks)");
+        });
+//        $this->messagePositions($chart_date);
+
+    }
+
+    public function parseBillboardYearEnd($crawler, $chart): void
+    {
+        $date = $crawler->filter('nav.o-nav h4')->first()->text();
+        $this->comment("Year is $date");
+        $date = Carbon::create($date)->format('Y-m-d');
+        $chart_date = ChartDate::firstOrCreate(['date' => $date, 'chart_id' => $chart->id]);
+        if ($chart_date->wasRecentlyCreated) {
+            (new TelegramMessageController())->store("Agregada la lista $chart->name para la fecha $date");
+        } else {
+            if (env('APP_ENV') != 'local')
+                return;
+        }
+        $elements = $crawler->filter('.o-chart-results-list-row-container');
+        $elements->each(function (Crawler $node, $i) use ($chart_date) {
+            $position = $node->filter(".c-label")->first()->text();
+            $row = $node->filter(".o-chart-results-list-row");
+            $image = $row->filter("li")->filter(".c-lazy-image .lrv-a-crop-1x1")->filter("img")->attr('data-lazy-src');
+            $title = $row->filter("li.lrv-u-width-100p ul li h3")->eq(0)->text();
+            $singer = $row->filter("li.lrv-u-width-100p ul li span")->eq(0)->text();
+            $last = null;
+            $peak = null;
+            $weeks = null;
+            $this->comment("$position. $title - $singer ($last $peak $weeks)");
+            if (env('APP_ENV') == 'local' && $position > 15) return true;
+
+            ChartItem::updateOrCreate(
+                [
+                    'chart_date_id' => $chart_date->id,
+                    'position' => $position
+                ],
+                [
+                    "title" => $title,
+                    "last_position" => $last,
+                    "peak_position" => $peak,
+                    "week_on_chart" => $weeks,
+                    "image" => $image,
+                    "singer" => $singer
+                ]
+            );
+            sleep(1);
         });
 //        $this->messagePositions($chart_date);
 
@@ -218,12 +264,12 @@ class ReadChart extends Command
         $date = explode("ORDENADO", $date)[0];
         $date = $this->dateConverterPistacubana($date);
         $chart_date = ChartDate::firstOrCreate([
-            'date' => $date, 'chart_id' => $chart->id]
+                'date' => $date, 'chart_id' => $chart->id]
         );
         if ($chart_date->wasRecentlyCreated) {
             (new TelegramMessageController())->store("Agregada la lista $chart->name para la fecha $date");
         }
-        $this->comment("El chart date tiene id ". $chart_date->id ." y sale con fecha". $chart_date->date);
+        $this->comment("El chart date tiene id " . $chart_date->id . " y sale con fecha" . $chart_date->date);
         $elements->each(function ($node, $i) use ($chart_date) {
             if ($i > 0) {
                 $position = $node->filter('.event_date')->filter('.event_day')->text();

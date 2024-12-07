@@ -13,7 +13,7 @@ class TelegramController extends Controller
     /**
      * @throws \Exception
      */
-    public function sendMessage($message, $format = 'markdown')
+    public function sendMessage($message, $format = 'html')
     {
         $bot = new BotApi(env('BOT_TOKEN'));
 
