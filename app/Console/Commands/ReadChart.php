@@ -42,9 +42,13 @@ class ReadChart extends Command
             ['name' => 'Pistacubana Top 100'],
             ['url' => 'https://www.pistacubana.com/lista/top100/522024/posicion']
         );
+        Chart::updateOrCreate(
+            ['name' => 'Pistacubana Top 100 Artistas'],
+            ['url' => 'https://www.pistacubana.com/lista/artistas100/522024/posicion']
+        );
 
         if (env('APP_ENV') == 'local')
-            $charts = Chart::find([10]);
+            $charts = Chart::find([14]);
         else
             $charts = Chart::all();
         foreach ($charts as $chart) {
@@ -264,6 +268,7 @@ class ReadChart extends Command
     public function parsePistacubana($crawler, $chart): void
     {
         $elements = $crawler->filter('.side_post.trans_400');
+
         $date_full = $crawler->filter(".home_content")->filter('h3')->text();
         $date = explode("FECHA OFICIAL:", $date_full)[1];
         $date = explode("ORDENADO", $date)[0];
@@ -275,8 +280,8 @@ class ReadChart extends Command
             (new TelegramMessageController())->store("Agregada la lista $chart->name para la fecha $date");
         }
         $this->comment("El chart date tiene id " . $chart_date->id . " y sale con fecha" . $chart_date->date);
-        $elements->each(function ($node, $i) use ($chart_date) {
-            if ($i > 0) {
+        $elements->each(function ($node, $i) use ($chart_date, $chart) {
+            if ($i > (str_contains($chart->name, '100 Artistas')?-1:0)) {
                 $position = $node->filter('.event_date')->filter('.event_day')->text();
                 $title = $node->filter('.side_post_content')->filter('.side_post_title')->text();
                 $singer = $node->filter('.side_post_content')->filter('.post_meta')->eq(1)->text();
