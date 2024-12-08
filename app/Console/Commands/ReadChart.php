@@ -38,9 +38,15 @@ class ReadChart extends Command
      */
     public function handle()
     {
-//        $charts = Chart::find([13]);
-        $charts = Chart::all();
-        $now = Carbon::now();
+        Chart::updateOrCreate(
+            ['name' => 'Pistacubana Top 100'],
+            ['url' => 'https://www.pistacubana.com/lista/top100/522024/posicion']
+        );
+
+        if (env('APP_ENV') == 'local')
+            $charts = Chart::find([10]);
+        else
+            $charts = Chart::all();
         foreach ($charts as $chart) {
             $this->comment("Comenzando con $chart->name");
             $browser = new HttpBrowser(HttpClient::create());
@@ -276,6 +282,7 @@ class ReadChart extends Command
                 $singer = $node->filter('.side_post_content')->filter('.post_meta')->eq(1)->text();
                 $weeks = $node->filter('.side_post_content')->filter("div")->last()->filter("weeks")->text() ?? null;
                 $last = $node->filter('.side_post_content')->filter("div")->last()->filter("last")->text() ?? null;
+                if ($last > 100) $last = '-';
                 $peak = $node->filter('.side_post_content')->filter("div")->last()->filter("best")->text() ?? null;
                 $image = "https://www.pistacubana.com/" . $node->filter('img')->attr('src');
                 $this->comment("Insertando la cancion $position $title - $singer");
