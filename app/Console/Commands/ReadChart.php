@@ -82,8 +82,8 @@ class ReadChart extends Command
     public function sendSongsTelegram($chartDates): void
     {
         foreach ($chartDates as $chartDate) {
-            $songs = $chartDate->items()->take(10)->get();
-            $message = "Top 10 de la lista " . $chartDate->chart->name . ": \n";
+            $songs = $chartDate->items()->take(20)->get();
+            $message = "Top 20 de la lista " . $chartDate->chart->name . ": \n";
             $this->comment($message);
             foreach ($songs as $song) {
                 $message .= $song->fulltitle . "\n";
