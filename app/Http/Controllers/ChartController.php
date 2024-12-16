@@ -23,7 +23,7 @@ class ChartController extends Controller
         if (isset($type))
             $query = Chart::where('name','like',"%$type%")->get();
         else
-            $query = Chart::all();
+            $query = Chart::orderBy('name')->get();
         return $this->sendResponse($query);
     }
 
