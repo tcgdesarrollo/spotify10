@@ -362,11 +362,13 @@ class ReadChart extends Command
             'Diciembre'
         ];
         $fechaString = trim($fechaString);
+        echo $fechaString;
         $exploded = explode('/', $fechaString);
         $date_month = $exploded[1];
+        echo $date_month;
         //coge el mes por el indice del array de meses
         $real_month = array_search($date_month, $months);
-        if ($real_month) {
+        if (isset($real_month)) {
             $fechaString2 = $exploded[2] . "/" . $real_month + 1 . "/" . $exploded[0];
             $fechaObjeto = Carbon::parse($fechaString2);
             // Imprimir la fecha en el formato deseado
