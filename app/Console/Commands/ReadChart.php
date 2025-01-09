@@ -32,23 +32,49 @@ class ReadChart extends Command
      */
     protected $description = 'Command description';
 
+
+    private function calcularSemanasDesdeDiciembreConCarbon()
+    {
+        // Obtén la fecha de hoy
+        $hoy = Carbon::now();
+
+        // Define la fecha de inicio: 1 de diciembre del año pasado
+        $inicioDiciembre = $hoy->month === 12
+            ? Carbon::create($hoy->year, 12, 1)
+            : Carbon::create($hoy->year - 1, 12, 1);
+
+        // Calcula la diferencia en días
+        $diasTotales = $inicioDiciembre->diffInDays($hoy);
+
+        // Calcula semanas completas y días restantes
+        $semanas = intdiv($diasTotales, 7);
+        $diasRestantes = $diasTotales % 7;
+
+        return $semanas;
+    }
+
     /**
      * Execute the console command.
      * @throws \Exception
      */
     public function handle()
     {
+        $week_number = $this->calcularSemanasDesdeDiciembreConCarbon();
+        $week_number_parsed = str_pad($week_number, 2, '0', STR_PAD_LEFT);
+        $year = now()->month == 12 ? now()->year + 1 : now()->year;
+        $this->comment("https://www.pistacubana.com/lista/top100/$week_number_parsed$year/posicion");
+
         Chart::updateOrCreate(
             ['name' => 'Pistacubana Top 100'],
-            ['url' => 'https://www.pistacubana.com/lista/top100/522024/posicion']
+            ['url' => "https://www.pistacubana.com/lista/top100/$week_number_parsed$year/posicion"]
         );
         Chart::updateOrCreate(
             ['name' => 'Pistacubana Top 100 Artistas'],
-            ['url' => 'https://www.pistacubana.com/lista/artistas100/522024/posicion']
+            ['url' => "https://www.pistacubana.com/lista/artistas100/$week_number_parsed$year/posicion"]
         );
 
         if (env('APP_ENV') == 'local')
-            $charts = Chart::find([14]);
+            $charts = Chart::find([10]);
         else
             $charts = Chart::all();
         foreach ($charts as $chart) {
@@ -281,7 +307,7 @@ class ReadChart extends Command
         }
         $this->comment("El chart date tiene id " . $chart_date->id . " y sale con fecha" . $chart_date->date);
         $elements->each(function ($node, $i) use ($chart_date, $chart) {
-            if ($i > (str_contains($chart->name, '100 Artistas')?-1:0)) {
+            if ($i > (str_contains($chart->name, '100 Artistas') ? -1 : 0)) {
                 $position = $node->filter('.event_date')->filter('.event_day')->text();
                 $title = $node->filter('.side_post_content')->filter('.side_post_title')->text();
                 $singer = $node->filter('.side_post_content')->filter('.post_meta')->eq(1)->text();
