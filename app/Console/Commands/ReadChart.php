@@ -75,17 +75,17 @@ class ReadChart extends Command
             ['name' => 'Billboard Hot 100 Songs of the 21st Century'],
             ['url' => "https://www.billboard.com/charts/top-hot-100-songs-of-the-21st-century/"]
         );
-         Chart::updateOrCreate(
-            ['name' => 'Billboard’s Top Billboard 200 Albums of the 21st Century'],
+        Chart::updateOrCreate(
+            ['name' => 'Billboard 200 Albums of the 21st Century'],
             ['url' => "https://www.billboard.com/charts/top-billboard-200-albums-of-the-21st-century/"]
         );
-         Chart::updateOrCreate(
-            ['name' => 'Billboard’s Top Artists of the 21st Century'],
+        Chart::updateOrCreate(
+            ['name' => 'Billboard Top Artists of the 21st Century'],
             ['url' => "https://www.billboard.com/charts/top-artists-of-the-21st-century/"]
         );
 
         if (env('APP_ENV') == 'local')
-            $charts = Chart::find([16,17,18]);
+            $charts = Chart::find([19]);
         else
             $charts = Chart::all();
         foreach ($charts as $chart) {
@@ -101,9 +101,17 @@ class ReadChart extends Command
             }
 
             if (str_contains($chart->url, 'year-end') || str_contains($chart->url, '21st-century'))
-                $this->parseBillboardYearEnd($crawler, $chart);
+                try {
+                    $this->parseBillboardYearEnd($crawler, $chart);
+                } catch (\Exception $e) {
+                    $this->comment("Error al parsearla");
+                }
             elseif (str_contains($chart->url, 'billboard'))
-                $this->parseBillboard($crawler, $chart);
+                try {
+                    $this->parseBillboard($crawler, $chart);
+                } catch (\Exception $e) {
+                    $this->comment("Error al parsearla");
+                }
             elseif (str_contains($chart->url, 'officialcharts')) {
                 $this->parseUk($crawler, $chart);
             } elseif (str_contains($chart->url, 'pistacubana')) {
@@ -177,8 +185,9 @@ class ReadChart extends Command
 
     public function parseBillboardYearEnd($crawler, $chart): void
     {
-        $date = $crawler->filter('nav.o-nav h4')->first()->text();
-        if ($date == 'Billboard') $date = null;
+        $date = $crawler->filter('nav.o-nav h4')->first()->text() ?? null;
+        $this->comment($date == 'Billboard' || !isset($date));
+        if ($date == 'Billboard' || !isset($date)) $date = null;
         $this->comment("Year is $date");
         if (isset($date))
             $date = Carbon::create($date)->format('Y-m-d');
@@ -191,6 +200,7 @@ class ReadChart extends Command
             if (env('APP_ENV') != 'local')
                 return;
         }
+        $this->comment("here");
         $elements = $crawler->filter('.o-chart-results-list-row-container');
         $elements->each(function (Crawler $node, $i) use ($chart_date) {
             $position = $node->filter(".c-label")->first()->text();
