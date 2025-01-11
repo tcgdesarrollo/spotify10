@@ -47,10 +47,7 @@ class ReadChart extends Command
         $diasTotales = $inicioDiciembre->diffInDays($hoy);
 
         // Calcula semanas completas y días restantes
-        $semanas = intdiv($diasTotales, 7);
-        $diasRestantes = $diasTotales % 7;
-
-        return $semanas;
+        return intdiv($diasTotales, 7);
     }
 
     /**
@@ -60,8 +57,7 @@ class ReadChart extends Command
     public function handle()
     {
         $week_number = $this->calcularSemanasDesdeDiciembreConCarbon();
-        if ($week_number < 8)
-            $week_number += rand(-1 * $week_number + 1, 1);
+        $week_number += rand(0, 1);
         $week_number_parsed = str_pad($week_number, 2, '0', STR_PAD_LEFT);
         $year = now()->month == 12 ? now()->year + 1 : now()->year;
         $this->comment("https://www.pistacubana.com/lista/top100/$week_number_parsed$year/posicion");
