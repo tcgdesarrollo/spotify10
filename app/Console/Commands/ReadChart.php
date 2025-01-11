@@ -71,8 +71,17 @@ class ReadChart extends Command
             ['url' => "https://www.pistacubana.com/lista/artistas100/$week_number_parsed$year/posicion"]
         );
 
+        Chart::updateOrCreate(
+            ['name' => 'Billboard Hot 100 Songs of the 21st Century'],
+            ['url' => "https://www.billboard.com/charts/top-hot-100-songs-of-the-21st-century/"]
+        );
+         Chart::updateOrCreate(
+            ['name' => 'Billboard Hot 100 Songs of the 21st Century'],
+            ['url' => "https://www.billboard.com/charts/top-hot-100-songs-of-the-21st-century/"]
+        );
+
         if (env('APP_ENV') == 'local')
-            $charts = Chart::find([10]);
+            $charts = Chart::find([15]);
         else
             $charts = Chart::all();
         foreach ($charts as $chart) {
@@ -87,7 +96,7 @@ class ReadChart extends Command
                 continue;
             }
 
-            if (str_contains($chart->url, 'year-end'))
+            if (str_contains($chart->url, 'year-end') || str_contains($chart->url, '21st-century'))
                 $this->parseBillboardYearEnd($crawler, $chart);
             elseif (str_contains($chart->url, 'billboard'))
                 $this->parseBillboard($crawler, $chart);
@@ -165,8 +174,12 @@ class ReadChart extends Command
     public function parseBillboardYearEnd($crawler, $chart): void
     {
         $date = $crawler->filter('nav.o-nav h4')->first()->text();
+        if ($date == 'Billboard') $date = null;
         $this->comment("Year is $date");
-        $date = Carbon::create($date)->format('Y-m-d');
+        if (isset($date))
+            $date = Carbon::create($date)->format('Y-m-d');
+        else
+            $date = Carbon::create(2000)->format('Y-m-d');
         $chart_date = ChartDate::firstOrCreate(['date' => $date, 'chart_id' => $chart->id]);
         if ($chart_date->wasRecentlyCreated) {
             (new TelegramMessageController())->store("Agregada la lista $chart->name para la fecha $date");
