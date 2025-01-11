@@ -76,12 +76,16 @@ class ReadChart extends Command
             ['url' => "https://www.billboard.com/charts/top-hot-100-songs-of-the-21st-century/"]
         );
          Chart::updateOrCreate(
-            ['name' => 'Billboard Hot 100 Songs of the 21st Century'],
-            ['url' => "https://www.billboard.com/charts/top-hot-100-songs-of-the-21st-century/"]
+            ['name' => 'Billboard’s Top Billboard 200 Albums of the 21st Century'],
+            ['url' => "https://www.billboard.com/charts/top-billboard-200-albums-of-the-21st-century/"]
+        );
+         Chart::updateOrCreate(
+            ['name' => 'Billboard’s Top Artists of the 21st Century'],
+            ['url' => "https://www.billboard.com/charts/top-artists-of-the-21st-century/"]
         );
 
         if (env('APP_ENV') == 'local')
-            $charts = Chart::find([15]);
+            $charts = Chart::find([16,17,18]);
         else
             $charts = Chart::all();
         foreach ($charts as $chart) {
