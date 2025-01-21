@@ -72,20 +72,26 @@ class ReadChart extends Command
         );
 
         Chart::updateOrCreate(
-            ['name' => 'Billboard Hot 100 Songs of the 21st Century'],
-            ['url' => "https://www.billboard.com/charts/top-hot-100-songs-of-the-21st-century/"]
-        );
-        Chart::updateOrCreate(
-            ['name' => 'Billboard 200 Albums of the 21st Century'],
-            ['url' => "https://www.billboard.com/charts/top-billboard-200-albums-of-the-21st-century/"]
-        );
-        Chart::updateOrCreate(
-            ['name' => 'Billboard Top Artists of the 21st Century'],
-            ['url' => "https://www.billboard.com/charts/top-artists-of-the-21st-century/"]
+            ['name' => 'Spotify Daily Global Top 100'],
+            ['url' => "https://kworb.net/spotify/country/global_daily.html"]
         );
 
+        Chart::updateOrCreate(
+            ['name' => 'Spotify Daily (España) Top 100'],
+            ['url' => "https://kworb.net/spotify/country/es_daily.html"]
+        );
+        Chart::updateOrCreate(
+            ['name' => 'Spotify Daily (USA) Top 100'],
+            ['url' => "https://kworb.net/spotify/country/us_daily.html"]
+        );
+        Chart::updateOrCreate(
+            ['name' => 'Spotify Daily (UK) Top 100'],
+            ['url' => "https://kworb.net/spotify/country/gb_daily.html"]
+        );
+
+
         if (env('APP_ENV') == 'local')
-            $charts = Chart::find([19]);
+            $charts = Chart::find([24]);
         else
             $charts = Chart::all();
         foreach ($charts as $chart) {
@@ -116,16 +122,63 @@ class ReadChart extends Command
                 $this->parseUk($crawler, $chart);
             } elseif (str_contains($chart->url, 'pistacubana')) {
                 $this->parsePistacubana($crawler, $chart);
-//            } elseif (str_contains($chart->url, 'spotify')) {
-//                $this->parseSpotify($crawler, $chart);
+            } elseif (str_contains($chart->url, 'kworb'))
+                $this->parseSpotify($crawler, $chart);
 //            } elseif (str_contains($chart->url, 'mediatraffic')) {
 //                $this->parseMediatraffic($crawler, $chart);
-            }
+//            }
         }
 //        ChartDate::where('date', '<', Carbon::now()->subMonths(3))->delete();
         $new_charts = ChartDate::with('chart')->where('created_at', '>=', now()->subMinutes(15))->get();
         $this->sendSongsTelegram($new_charts);
         return true;
+    }
+
+    public function parseSpotify($crawler, $chart)
+    {
+        $date = (clone $crawler)->filter('.pagetitle')->first()->text();
+        $elements = (clone $crawler)->filter('#spotifydaily tbody tr');
+        $date = explode(' - ', $date)[2];
+        $date = explode(' |', $date[1]);
+        $date = $date[0];
+        $chart_date = ChartDate::firstOrCreate(['date' => $date, 'chart_id' => $chart->id]);
+        if ($chart_date->wasRecentlyCreated) {
+            (new TelegramMessageController())->store("Agregada la lista $chart->name para la fecha $date");
+        } else {
+            return;
+        }
+        $elements->each(function (Crawler $node, $i) use ($chart_date) {
+            $position = $node->filter('td')->eq(0)->text();
+            if ($position > 100) return;
+            $image = 'https://img.icons8.com/?size=100&id=M6BldIQ2Mn4j&format=png&color=000000';
+            $parts = explode(' - ', $node->filter('td')->eq(2)->text());
+            $title = $parts[0];
+            $singer = $parts[1];
+            $last = $node->filter('td')->eq(1)->text();
+            if ($last == '=')
+                $last = $position;
+            elseif ($last == 'NEW')
+                $last = null;
+            else $last = $position + ($last);
+            $peak = $node->filter('td')->eq(4)->text();
+            $weeks = round($node->filter('td')->eq(3)->text() / 7, 0, PHP_ROUND_HALF_DOWN);
+            $this->comment("$position $title - $singer $last $peak $weeks");
+            ChartItem::updateOrCreate(
+                [
+                    'chart_date_id' => $chart_date->id,
+                    'position' => $position
+                ],
+                [
+                    "title" => $title,
+                    "last_position" => $last,
+                    "peak_position" => $peak,
+                    "week_on_chart" => $weeks,
+                    "image" => $image,
+                    "singer" => $singer
+                ]
+            );
+        });
+
     }
 
     public function sendSongsTelegram($chartDates): void
@@ -402,49 +455,6 @@ class ReadChart extends Command
         return $fechaString;
     }
 
-    public function parseSpotify($crawler, $chart): void
-    {
-        Log::debug($crawler->text());
-        $elements = $crawler->filter('.contentSpacing');
-        $this->comment($elements->text());
-        $date = $crawler->filter('.chart-results p.c-tagline')->first()->text();
-        $date = str_replace('Week of ', "", $date);
-        $date = $this->dateConverter($date, $chart->url);
-        $chart_date = ChartDate::firstOrCreate(['date' => $date, 'chart_id' => $chart->id]);
-        if ($chart_date->wasRecentlyCreated) {
-            (new TelegramMessageController())->store("Agregada la lista $chart->name para la fecha $date");
-        } else {
-            return;
-        }
-        $elements->each(function (Crawler $node, $i) use ($chart_date) {
-            $position = $node->filter(".c-label")->first()->text();
-            $row = $node->filter(".o-chart-results-list-row");
-            $image = $row->filter("li")->filter(".c-lazy-image .lrv-a-crop-1x1")->filter("img")->attr('data-lazy-src');
-            $title = $row->filter("li.lrv-u-width-100p ul li h3")->eq(0)->text();
-            $singer = $row->filter("li.lrv-u-width-100p ul li span")->eq(0)->text();
-            $last = $row->filter("li.lrv-u-width-100p ul li")->eq(3)->text();
-            $peak = $row->filter("li.lrv-u-width-100p ul li")->eq(4)->text();
-            $weeks = $row->filter("li.lrv-u-width-100p ul li")->eq(5)->text();
-            ChartItem::updateOrCreate(
-                [
-                    'chart_date_id' => $chart_date->id,
-                    'position' => $position
-                ],
-                [
-                    "title" => $title,
-                    "last_position" => $last,
-                    "peak_position" => $peak,
-                    "week_on_chart" => $weeks,
-                    "image" => $image,
-                    "singer" => $singer
-                ]
-            );
-            sleep(1);
-//            $this->comment("$position. $title - $singer ($last $peak $weeks)");
-        });
-//        $this->messagePositions($chart_date);
-
-    }
 
     public function parseMediatraffic($crawler, $chart): void
     {
