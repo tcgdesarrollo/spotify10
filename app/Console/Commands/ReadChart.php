@@ -142,7 +142,7 @@ class ReadChart extends Command
         $date = explode(' - ', $date)[2];
         $this->comment($date);
         $date = explode(' |', $date);
-        $date = $date[0];
+        $date = Carbon::parse($date[0])->format('Y-m-d');
         $this->comment("final ".$date);
         $chart_date = ChartDate::firstOrCreate(['date' => $date, 'chart_id' => $chart->id]);
         if ($chart_date->wasRecentlyCreated) {
