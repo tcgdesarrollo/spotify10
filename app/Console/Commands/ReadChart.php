@@ -56,6 +56,7 @@ class ReadChart extends Command
      */
     public function handle()
     {
+        ChartDate::where('date',0)->delete();
         $week_number = $this->calcularSemanasDesdeDiciembreConCarbon();
         $week_number += rand(0, 1);
         $week_number_parsed = str_pad($week_number, 2, '0', STR_PAD_LEFT);
@@ -91,7 +92,7 @@ class ReadChart extends Command
 
 
         if (env('APP_ENV') == 'local')
-            $charts = Chart::find([24]);
+            $charts = Chart::find([21,22,23,24]);
         else
             $charts = Chart::all();
         foreach ($charts as $chart) {
@@ -139,8 +140,11 @@ class ReadChart extends Command
         $date = (clone $crawler)->filter('.pagetitle')->first()->text();
         $elements = (clone $crawler)->filter('#spotifydaily tbody tr');
         $date = explode(' - ', $date)[2];
-        $date = explode(' |', $date[1]);
+        $this->comment($date);
+        $date = explode(' |', $date);
         $date = $date[0];
+        $this->comment("final ".$date);
+        return;
         $chart_date = ChartDate::firstOrCreate(['date' => $date, 'chart_id' => $chart->id]);
         if ($chart_date->wasRecentlyCreated) {
             (new TelegramMessageController())->store("Agregada la lista $chart->name para la fecha $date");
