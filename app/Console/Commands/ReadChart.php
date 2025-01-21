@@ -144,7 +144,6 @@ class ReadChart extends Command
         $date = explode(' |', $date);
         $date = $date[0];
         $this->comment("final ".$date);
-        return;
         $chart_date = ChartDate::firstOrCreate(['date' => $date, 'chart_id' => $chart->id]);
         if ($chart_date->wasRecentlyCreated) {
             (new TelegramMessageController())->store("Agregada la lista $chart->name para la fecha $date");
@@ -154,7 +153,7 @@ class ReadChart extends Command
         $elements->each(function (Crawler $node, $i) use ($chart_date) {
             $position = $node->filter('td')->eq(0)->text();
             if ($position > 100) return;
-            $image = 'https://img.icons8.com/?size=100&id=M6BldIQ2Mn4j&format=png&color=000000';
+            $image = 'https://img.icons8.com/?size=100&id=63316&format=png&color=000000';
             $parts = explode(' - ', $node->filter('td')->eq(2)->text());
             $title = $parts[0];
             $singer = $parts[1];
