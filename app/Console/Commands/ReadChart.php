@@ -56,7 +56,6 @@ class ReadChart extends Command
      */
     public function handle()
     {
-        ChartDate::where('date',0)->delete();
         $week_number = $this->calcularSemanasDesdeDiciembreConCarbon();
         $week_number += rand(0, 1);
         $week_number_parsed = str_pad($week_number, 2, '0', STR_PAD_LEFT);
