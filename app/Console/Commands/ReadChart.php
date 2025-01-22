@@ -72,21 +72,18 @@ class ReadChart extends Command
         );
 
         Chart::updateOrCreate(
-            ['name' => 'Spotify Daily Global Top 100'],
-            ['url' => "https://kworb.net/spotify/country/global_daily.html"]
+            ['name' => 'Spotify Global Top 100'],
+            ['url' => "https://kworb.net/spotify/country/global_weekly.html"]
         );
 
         Chart::updateOrCreate(
-            ['name' => 'Spotify Daily (España) Top 100'],
-            ['url' => "https://kworb.net/spotify/country/es_daily.html"]
+            ['name' => 'Spotify España Top 100'],
+            ['url' => "https://kworb.net/spotify/country/es_weekly.html"]
         );
+
         Chart::updateOrCreate(
-            ['name' => 'Spotify Daily (USA) Top 100'],
-            ['url' => "https://kworb.net/spotify/country/us_daily.html"]
-        );
-        Chart::updateOrCreate(
-            ['name' => 'Spotify Daily (UK) Top 100'],
-            ['url' => "https://kworb.net/spotify/country/gb_daily.html"]
+            ['name' => 'Spotify UK Top 100'],
+            ['url' => "https://kworb.net/spotify/country/gb_weekly.html"]
         );
 
 
