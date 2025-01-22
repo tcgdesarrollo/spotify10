@@ -71,6 +71,7 @@ class ReadChart extends Command
             ['url' => "https://www.pistacubana.com/lista/artistas100/$week_number_parsed$year/posicion"]
         );
 
+        Chart::where('url', 'like', '%daily%')->delete();
         Chart::updateOrCreate(
             ['name' => 'Spotify Global Top 100'],
             ['url' => "https://kworb.net/spotify/country/global_weekly.html"]
@@ -88,7 +89,7 @@ class ReadChart extends Command
 
 
         if (env('APP_ENV') == 'local')
-            $charts = Chart::find([21,22,23,24]);
+            $charts = Chart::find([21, 22, 23, 24]);
         else
             $charts = Chart::all();
         foreach ($charts as $chart) {
@@ -139,7 +140,7 @@ class ReadChart extends Command
         $this->comment($date);
         $date = explode(' |', $date);
         $date = Carbon::parse($date[0])->format('Y-m-d');
-        $this->comment("final ".$date);
+        $this->comment("final " . $date);
         $chart_date = ChartDate::firstOrCreate(['date' => $date, 'chart_id' => $chart->id]);
         if ($chart_date->wasRecentlyCreated) {
             (new TelegramMessageController())->store("Agregada la lista $chart->name para la fecha $date");
