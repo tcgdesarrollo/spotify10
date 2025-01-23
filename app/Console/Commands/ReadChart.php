@@ -89,7 +89,7 @@ class ReadChart extends Command
 
 
         if (env('APP_ENV') == 'local')
-            $charts = Chart::find([21, 22, 23, 24]);
+            $charts = Chart::find([26,27,28]);
         else
             $charts = Chart::all();
         foreach ($charts as $chart) {
@@ -135,7 +135,7 @@ class ReadChart extends Command
     public function parseSpotify($crawler, $chart)
     {
         $date = (clone $crawler)->filter('.pagetitle')->first()->text();
-        $elements = (clone $crawler)->filter('#spotifydaily tbody tr');
+        $elements = (clone $crawler)->filter('#spotifyweekly tbody tr');
         $date = explode(' - ', $date)[2];
         $this->comment($date);
         $date = explode(' |', $date);
