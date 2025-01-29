@@ -86,10 +86,14 @@ class ReadChart extends Command
             ['name' => 'Spotify UK Top 100'],
             ['url' => "https://kworb.net/spotify/country/gb_weekly.html"]
         );
+        Chart::updateOrCreate(
+            ['url' => "https://kworb.net/spotify/country/global_daily.html"],
+            ['name' => 'Spotify Global Daily']
+        );
 
 
         if (env('APP_ENV') == 'local')
-            $charts = Chart::find([26,27,28]);
+            $charts = Chart::find([29]);
         else
             $charts = Chart::all();
         foreach ($charts as $chart) {
@@ -135,7 +139,10 @@ class ReadChart extends Command
     public function parseSpotify($crawler, $chart)
     {
         $date = (clone $crawler)->filter('.pagetitle')->first()->text();
-        $elements = (clone $crawler)->filter('#spotifyweekly tbody tr');
+        if (str_contains($chart->url, 'global_daily'))
+            $elements = (clone $crawler)->filter('#spotifydaily tbody tr');
+        else
+            $elements = (clone $crawler)->filter('#spotifyweekly tbody tr');
         $date = explode(' - ', $date)[2];
         $this->comment($date);
         $date = explode(' |', $date);
