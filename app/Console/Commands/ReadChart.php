@@ -83,7 +83,7 @@ class ReadChart extends Command
 
 
         if (env('APP_ENV') == 'local')
-            $charts = Chart::find([29]);
+            $charts = Chart::latest()->take(1)->get();
         else
             $charts = Chart::all();
         foreach ($charts as $chart) {
@@ -158,9 +158,9 @@ class ReadChart extends Command
                 $last = null;
             else $last = $position + ($last);
             $peak = $node->filter('td')->eq(4)->text();
+            $streams = (double)str_replace(",","",$node->filter('td')->eq(6)->text());
             $weeks = round($node->filter('td')->eq(3)->text() / 7, 0, PHP_ROUND_HALF_DOWN);
-            $this->comment("$position $title - $singer $last $peak $weeks");
-            ChartItem::updateOrCreate(
+            $chartItem = ChartItem::updateOrCreate(
                 [
                     'chart_date_id' => $chart_date->id,
                     'position' => $position
@@ -171,9 +171,12 @@ class ReadChart extends Command
                     "peak_position" => $peak,
                     "week_on_chart" => $weeks,
                     "image" => $image,
-                    "singer" => $singer
+                    "singer" => $singer,
+                    "streams" => $streams,
                 ]
             );
+            $this->comment($chartItem->fulltitle);
+
         });
 
     }

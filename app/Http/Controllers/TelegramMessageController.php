@@ -22,9 +22,9 @@ class TelegramMessageController extends Controller
             'description' => $message,
             'priority' => $priority
         ]);
-//        if (env('APP_ENV') != 'prod') {
-//            Artisan::call('send:telegram');
-//        }
+        if (env('APP_ENV') != 'prod') {
+            Artisan::call('send:telegram');
+        }
         return true;
 
     }
