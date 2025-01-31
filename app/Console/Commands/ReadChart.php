@@ -156,7 +156,7 @@ class ReadChart extends Command
                 $last = $position;
             elseif ($last == 'NEW')
                 $last = null;
-            else $last = $position + ($last);
+            else $last = $position . "($last)";
             $peak = $node->filter('td')->eq(4)->text();
             $streams = (double)str_replace(",","",$node->filter('td')->eq(6)->text());
             $weeks = round($node->filter('td')->eq(3)->text() / 7, 0, PHP_ROUND_HALF_DOWN);
