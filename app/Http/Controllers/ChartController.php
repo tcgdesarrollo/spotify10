@@ -21,7 +21,7 @@ class ChartController extends Controller
         ]);
         $type = $request->type;
         if (isset($type))
-            $query = Chart::where('name','like',"%$type%")->get();
+            $query = Chart::where('name', 'like', "%$type%")->get();
         else
             $query = Chart::orderBy('name')->get();
         return $this->sendResponse($query);
@@ -40,8 +40,13 @@ class ChartController extends Controller
 
     public function show(string $id): Response
     {
-        $chart = Chart::with(self::relations)->findOrFail($id);
-        return $this->sendResponse($chart);
+        $chart = Chart::findOrFail($id);
+        $me = auth()->user();
+        if ($me->isActive || $me->role_id == 1)
+            $dates = $chart->dates()->latest()->limit(5)->get()->load('items');
+        else
+            $dates = $chart->dates()->latest()->limit(2)->get()->load('items');
+        return $this->sendResponse(['chart' => $chart, 'dates' => $dates]);
     }
 
 

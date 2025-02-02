@@ -14,6 +14,7 @@ class Kernel extends ConsoleKernel
     {
          $schedule->command('app:read-chart')->cron('*/30 * * * *');
          $schedule->command('send:telegram')->cron('* * * * *');
+         $schedule->command('run:tools')->cron('0 * * * *');
 //         $schedule->command('app:read-history')->cron('0 17 * * 6-7')->withoutOverlapping(120);
     }
 

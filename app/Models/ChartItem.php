@@ -10,7 +10,7 @@ class ChartItem extends Model
 {
     protected $guarded = ['id'];
     protected $hidden = ['created_at', 'updated_at'];
-    protected $appends = ['fulltitle'];
+//    protected $appends = ['fulltitle'];
 
     public function getfulltitleAttribute()
     {

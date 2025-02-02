@@ -23,4 +23,19 @@ class Controller extends BaseController
     {
         return response(['data' => $query->paginate($total, page: $page)], $state);
     }
+
+
+    public function sendResponseValidationError($result, $state = 422, array $extra = null): Application|Response|\Illuminate\Contracts\Foundation\Application|ResponseFactory
+    {
+        if (isset($extra))
+            return response(['data' => $result, 'extra' => $extra], $state);
+        return response(['data' => $result], $state);
+    }
+
+//    public function sendResponseForbidden($state = 400, array $extra = null): Application|Response|\Illuminate\Contracts\Foundation\Application|ResponseFactory
+//    {
+//        if (isset($extra))
+//            return response(['data' => __('forbidden'), 'extra' => $extra], $state);
+//        return response(['data' => __('forbidden')], $state);
+//    }
 }

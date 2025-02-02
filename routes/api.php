@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AppVersionController;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ChartController;
 use App\Http\Controllers\ChartItemController;
 use App\Http\Controllers\StationController;
@@ -19,13 +20,24 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+Route::group([
+    'prefix' => 'auth',
+], function ($router) {
+    Route::post('register', [AuthController::class, 'register']);
+    Route::post('login', [AuthController::class, 'login']);
+
+});
+
+Route::middleware('auth:sanctum')->get('user/me', function (Request $request) {
     return $request->user();
 });
-Route::apiResources([
-    'charts' => ChartController::class,
-    'chart-item' => ChartItemController::class,
-    'app-version' => AppVersionController::class,
-    'telegram-message' => TelegramMessageController::class,
-    'stations' => StationController::class
-]);
+Route::group(['middleware' => 'auth:sanctum'], function () {
+    Route::get('user/logout', [AuthController::class, 'logout']);
+    Route::apiResources([
+        'charts' => ChartController::class,
+        'chart-item' => ChartItemController::class,
+        'app-version' => AppVersionController::class,
+        'telegram-message' => TelegramMessageController::class,
+        'stations' => StationController::class
+    ]);
+});

@@ -83,7 +83,7 @@ class ReadChart extends Command
 
 
         if (env('APP_ENV') == 'local')
-            $charts = Chart::latest()->take(1)->get();
+            $charts = Chart::all();
         else
             $charts = Chart::all();
         foreach ($charts as $chart) {

@@ -15,7 +15,7 @@ class Chart extends Model
 
     public function dates()
     {
-        return $this->hasMany(ChartDate::class)->orderByDesc('date')->take(4);
+        return $this->hasMany(ChartDate::class);
 
     }
 }
