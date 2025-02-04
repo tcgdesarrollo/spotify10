@@ -17,7 +17,7 @@ return [
 
    'paths' => ['api/*', 'sanctum/csrf-cookie'], // Incluye sanctum/csrf-cookie
     'allowed_methods' => ['*'],                 // Permite todos los métodos
-    'allowed_origins' => ['http://localhost:3000'], // Cambia al dominio del frontend
+    'allowed_origins' => ['*'], // Cambia al dominio del frontend
     'allowed_origins_patterns' => [],
     'allowed_headers' => ['*'],                 // Permite todos los headers
     'exposed_headers' => [],
