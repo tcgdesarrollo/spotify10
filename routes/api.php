@@ -28,6 +28,7 @@ Route::group([
 
 });
 
+Route::apiResources(['app-version'=> AppVersionController::class]);
 Route::middleware('auth:sanctum')->get('user/me', function (Request $request) {
     return $request->user();
 });
@@ -36,7 +37,6 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::apiResources([
         'charts' => ChartController::class,
         'chart-item' => ChartItemController::class,
-        'app-version' => AppVersionController::class,
         'telegram-message' => TelegramMessageController::class,
         'stations' => StationController::class
     ]);

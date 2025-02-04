@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\AppVersion;
 use App\Models\User;
 use Illuminate\Console\Command;
 
@@ -34,6 +35,9 @@ class Tools extends Command
             ]
         );
 
-
+    AppVersion::create([
+        'version'=> '2.0',
+        'changes'=>"Agrega autenticación"
+    ]);
     }
 }
