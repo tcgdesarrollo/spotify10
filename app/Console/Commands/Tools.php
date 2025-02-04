@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\AppVersion;
 use App\Models\User;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Hash;
 
 class Tools extends Command
 {
@@ -27,17 +28,19 @@ class Tools extends Command
      */
     public function handle()
     {
-        User::firstOrCreate(
-            ['email' => 'admin@admin.com'],
+
+
+        AppVersion::updateOrCreate([
+            'version' => '2.0',
+            'changes' => "Agrega autenticación"
+        ]);
+        User::updateOrCreate(
+            ['email' => 'aarzuagat@gmail.com'],
             [
-                'name' => 'Admin',
+                'name' => 'Alberto',
+                'password' => Hash::make('601-Daddy'),
                 'role_id' => 1,
             ]
         );
-
-    AppVersion::create([
-        'version'=> '2.0',
-        'changes'=>"Agrega autenticación"
-    ]);
     }
 }
