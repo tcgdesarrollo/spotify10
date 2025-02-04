@@ -12,7 +12,7 @@ class AppVersionController extends Controller
 
     public function index()
     {
-        $query = AppVersion::all()->first();
+        $query = AppVersion::latest()->first();
         return $this->sendResponse($query);
     }
 
