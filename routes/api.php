@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+Route::apiresources(['stations' => StationController::class]);
 Route::group([
     'prefix' => 'auth',
 ], function ($router) {
@@ -28,7 +29,7 @@ Route::group([
 
 });
 
-Route::apiResources(['app-version'=> AppVersionController::class]);
+Route::apiResources(['app-version' => AppVersionController::class]);
 Route::middleware('auth:sanctum')->get('user/me', function (Request $request) {
     return $request->user();
 });
@@ -38,6 +39,5 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         'charts' => ChartController::class,
         'chart-item' => ChartItemController::class,
         'telegram-message' => TelegramMessageController::class,
-        'stations' => StationController::class
     ]);
 });
