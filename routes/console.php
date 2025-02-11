@@ -16,6 +16,6 @@ use Illuminate\Support\Facades\Schedule;
 */
 
 
-Schedule::command('app:read-chart')->cron('*/30 * * * *');
+Schedule::command('app:read-chart')->cron('*/10 * * * *');
 Schedule::command('send:telegram')->cron('* * * * *');
 Schedule::command('run:tools')->cron('0 * * * *');

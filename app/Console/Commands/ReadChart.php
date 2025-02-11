@@ -71,15 +71,15 @@ class ReadChart extends Command
             ['url' => "https://www.pistacubana.com/lista/artistas100/$week_number_parsed$year/posicion"]
         );
 
-        Chart::updateOrCreate(
-            ['name' => 'Spotify Global Top 100'],
-            ['url' => "https://kworb.net/spotify/country/global_weekly.html"]
-        );
-
-        Chart::updateOrCreate(
-            ['url' => "https://kworb.net/spotify/country/global_daily.html"],
-            ['name' => 'Spotify Global Daily']
-        );
+//        Chart::updateOrCreate(
+//            ['name' => 'Spotify Global Top 100'],
+//            ['url' => "https://kworb.net/spotify/country/global_weekly.html"]
+//        );
+//
+//        Chart::updateOrCreate(
+//            ['url' => "https://kworb.net/spotify/country/global_daily.html"],
+//            ['name' => 'Spotify Global Daily']
+//        );
 
 
         if (env('APP_ENV') == 'local')
