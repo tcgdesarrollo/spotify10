@@ -125,7 +125,7 @@ class ReadChart extends Command
 //            }
         }
 //        ChartDate::where('date', '<', Carbon::now()->subMonths(3))->delete();
-        $new_charts = ChartDate::with('chart')->where('created_at', '>=', now()->subMinutes(15))->get();
+        $new_charts = ChartDate::with('chart')->where('created_at', '>=', now()->subMinutes(9))->get();
         $this->sendSongsTelegram($new_charts);
         return true;
     }
