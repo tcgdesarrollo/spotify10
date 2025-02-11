@@ -113,7 +113,11 @@ class ReadChart extends Command
             elseif (str_contains($chart->url, 'officialcharts')) {
                 $this->parseUk($crawler, $chart);
             } elseif (str_contains($chart->url, 'pistacubana')) {
-                $this->parsePistacubana($crawler, $chart);
+                try {
+                    $this->parsePistacubana($crawler, $chart);
+                } catch (\Exception $e) {
+                    Log::debug("Error de pistacubana",[$e->getMessage()]);
+                }
             } elseif (str_contains($chart->url, 'kworb'))
                 $this->parseSpotify($crawler, $chart);
 //            } elseif (str_contains($chart->url, 'mediatraffic')) {
