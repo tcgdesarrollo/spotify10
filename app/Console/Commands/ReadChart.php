@@ -70,22 +70,14 @@ class ReadChart extends Command
             ['name' => 'Pistacubana Top 100 Artistas'],
             ['url' => "https://www.pistacubana.com/lista/artistas100/$week_number_parsed$year/posicion"]
         );
-
-        Chart::updateOrCreate(
-            ['name' => 'Spotify Global México'],
-            ['url' => "https://kworb.net/spotify/country/mx_weekly.html"]
-        );
 //
-        Chart::updateOrCreate(
-            ['url' => "https://kworb.net/spotify/country/co_weekly.html"],
-            ['name' => 'Spotify Global Colombia']
-        );
+//        Chart::updateOrCreate(
+//            ['name' => 'Spotify Global México'],
+//            ['url' => "https://kworb.net/spotify/country/mx_weekly.html"]
+//        );
+//
 
-
-        if (env('APP_ENV') == 'local')
-            $charts = Chart::all();
-        else
-            $charts = Chart::all();
+        $charts = Chart::all();
         foreach ($charts as $chart) {
             $this->comment("Comenzando con $chart->name");
             $browser = new HttpBrowser(HttpClient::create());
