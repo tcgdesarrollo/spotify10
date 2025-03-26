@@ -57,7 +57,7 @@ class ReadChart extends Command
     public function handle()
     {
         $week_number = $this->calcularSemanasDesdeDiciembreConCarbon();
-        $week_number += rand(0, 1);
+        $week_number += rand(-3, 1);
         $week_number_parsed = str_pad($week_number, 2, '0', STR_PAD_LEFT);
         $year = now()->month == 12 ? now()->year + 1 : now()->year;
         $this->comment("https://www.pistacubana.com/lista/top100/$week_number_parsed$year/posicion");
