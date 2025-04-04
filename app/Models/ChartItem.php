@@ -15,8 +15,8 @@ class ChartItem extends Model
     public function getfulltitleAttribute()
     {
         $title = "$this->position. $this->title  $this->singer ($this->last_position $this->peak_position $this->week_on_chart)";
-        if (isset($this->streams))
-            $title.= " (Streams: ".number_format($this->streams, 0, ',', '.').")";
+//        if (isset($this->streams))
+//            $title.= " (Streams: ".number_format($this->streams, 0, ',', '.').")";
         return $title;
 
     }
