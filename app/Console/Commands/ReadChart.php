@@ -108,7 +108,7 @@ class ReadChart extends Command
                 try {
                     $this->parsePistacubana($crawler, $chart);
                 } catch (\Exception $e) {
-                    Log::debug("Error de pistacubana",[$e->getMessage()]);
+                    Log::debug("Error de pistacubana", [$e->getMessage()]);
                 }
             } elseif (str_contains($chart->url, 'kworb'))
                 $this->parseSpotify($crawler, $chart);
@@ -154,7 +154,7 @@ class ReadChart extends Command
                 $last = null;
             else $last = $position . "($last)";
             $peak = $node->filter('td')->eq(4)->text();
-            $streams = (double)str_replace(",","",$node->filter('td')->eq(6)->text());
+            $streams = (double)str_replace(",", "", $node->filter('td')->eq(6)->text());
             $weeks = round($node->filter('td')->eq(3)->text() / 7, 0, PHP_ROUND_HALF_DOWN);
             $chartItem = ChartItem::updateOrCreate(
                 [
@@ -192,25 +192,47 @@ class ReadChart extends Command
 
     public function parseBillboard($crawler, $chart): void
     {
-        $elements = $crawler->filter('.o-chart-results-list-row-container');
-        $date = $crawler->filter('.chart-results p.c-tagline')->first()->text();
+        echo "Started" . PHP_EOL;
+        $date = $crawler->filter('#section-heading');
+        $date = $date->eq(1)->text();
+//        $date->each(function (Crawler $node, $i) use ($chart) {
+//            echo "subdate". $node->text();
+//        });
+//        $date = $crawler->filter('.chart-results p.c-tagline')->first()->text();
         $date = str_replace('Week of ', "", $date);
         $date = $this->dateConverter($date, $chart->url);
+        echo " date  " . $date . PHP_EOL;
         $chart_date = ChartDate::firstOrCreate(['date' => $date, 'chart_id' => $chart->id]);
         if ($chart_date->wasRecentlyCreated) {
             (new TelegramMessageController())->store("Agregada la lista $chart->name para la fecha $date");
         } else {
-            return;
+            if (env('APP_ENV') !== 'local')
+                return;
         }
+        $elements = $crawler->filter('.o-chart-results-list-row-container');
+        echo "antes" . PHP_EOL;
         $elements->each(function (Crawler $node, $i) use ($chart_date) {
+            echo $i . PHP_EOL;
             $position = $node->filter(".c-label")->first()->text();
-            $row = $node->filter(".o-chart-results-list-row");
-            $image = $row->filter("li")->filter(".c-lazy-image .lrv-a-crop-1x1")->filter("img")->attr('data-lazy-src');
-            $title = $row->filter("li.lrv-u-width-100p ul li h3")->eq(0)->text();
+            echo "pos " . $position . PHP_EOL;
+            $row = $node->filter(".a-chart-result-item-container");
+            $image = $node->filter(".c-lazy-image img")->attr("src") ?? null;
+            echo $image.PHP_EOL;
+            $title = $row->filter("#title-of-a-story")->eq(0)->text();
+            echo $title;
             $singer = $row->filter("li.lrv-u-width-100p ul li span")->eq(0)->text();
-            $last = $row->filter("li.lrv-u-width-100p ul li")->eq(3)->text();
-            $peak = $row->filter("li.lrv-u-width-100p ul li")->eq(4)->text();
-            $weeks = $row->filter("li.lrv-u-width-100p ul li")->eq(5)->text();
+//            $stats = $node->filter(".a-chart-result-item-container .lrv-u-flex@desktop .c-label");
+//            $last  = trim($stats->eq(0)->text() ?? "");
+//            $peak  = trim($stats->eq(1)->text() ?? "");
+//            $weeks = trim($stats->eq(2)->text() ?? "");
+//            echo "start...".PHP_EOL;
+//            $row->filter("li.lrv-u-width-100p ul li")->each(function (Crawler $node, $i) use ($chart_date) {
+//                echo $i . " - ".$node->text(). PHP_EOL;
+//            });
+//            echo "end...".PHP_EOL;
+            $last = $row->filter("li.lrv-u-width-100p ul li")->eq(2)->text();
+            $peak = $row->filter("li.lrv-u-width-100p ul li")->eq(3)->text();
+            $weeks = $row->filter("li.lrv-u-width-100p ul li")->eq(4)->text();
             ChartItem::updateOrCreate(
                 [
                     'chart_date_id' => $chart_date->id,
@@ -226,7 +248,7 @@ class ReadChart extends Command
                 ]
             );
             sleep(1);
-//            $this->comment("$position. $title - $singer ($last $peak $weeks)");
+            $this->comment("$position. $title - $singer ($last $peak $weeks)");
         });
 //        $this->messagePositions($chart_date);
 
