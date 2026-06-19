@@ -112,9 +112,12 @@ class ReadChart extends Command
                 }
             } elseif (str_contains($chart->url, 'kworb'))
                 $this->parseSpotify($crawler, $chart);
-//            } elseif (str_contains($chart->url, 'mediatraffic')) {
-//                $this->parseMediatraffic($crawler, $chart);
-//            }
+            elseif (str_contains($chart->url, 'mediatraffic'))
+                try {
+                    $this->parseMediatraffic($crawler, $chart);
+                } catch (\Exception $e) {
+                    Log::debug("Error de mediatraffic", [$e->getMessage()]);
+                }
         }
 //        ChartDate::where('date', '<', Carbon::now()->subMonths(3))->delete();
         $new_charts = ChartDate::with('chart')->where('created_at', '>=', now()->subMinutes(9))->get();
@@ -125,7 +128,7 @@ class ReadChart extends Command
     public function parseSpotify($crawler, $chart)
     {
         $date = (clone $crawler)->filter('.pagetitle')->first()->text();
-        if (str_contains($chart->url, 'global_daily'))
+        if (str_contains($chart->url, 'daily'))
             $elements = (clone $crawler)->filter('#spotifydaily tbody tr');
         else
             $elements = (clone $crawler)->filter('#spotifyweekly tbody tr');
@@ -135,18 +138,17 @@ class ReadChart extends Command
         $date = Carbon::parse($date[0])->format('Y-m-d');
         $this->comment("final " . $date);
         $chart_date = ChartDate::firstOrCreate(['date' => $date, 'chart_id' => $chart->id]);
-        if ($chart_date->wasRecentlyCreated) {
-            (new TelegramMessageController())->store("Agregada la lista $chart->name para la fecha $date");
-        } else {
+        if (!$chart_date->wasRecentlyCreated) {
             return;
         }
         $elements->each(function (Crawler $node, $i) use ($chart_date) {
             $position = $node->filter('td')->eq(0)->text();
             if ($position > 100) return;
             $image = 'https://img.icons8.com/?size=100&id=63316&format=png&color=000000';
-            $parts = explode(' - ', $node->filter('td')->eq(2)->text());
-            $title = $parts[0];
-            $singer = $parts[1];
+            // kworb muestra la celda como "Artista - Título"
+            $parts = explode(' - ', $node->filter('td')->eq(2)->text(), 2);
+            $singer = $parts[0];
+            $title = $parts[1] ?? $parts[0];
             $last = $node->filter('td')->eq(1)->text();
             if ($last == '=')
                 $last = $position;
@@ -181,11 +183,15 @@ class ReadChart extends Command
     {
         foreach ($chartDates as $chartDate) {
             $songs = $chartDate->items()->take(20)->get();
-            $message = "Top 20 de la lista " . $chartDate->chart->name . ": \n";
-            $this->comment($message);
+            $message = "Agregada la lista " . $chartDate->chart->name . " para la fecha " . $chartDate->date;
+            if (str_contains($chartDate->chart->url, 'officialcharts')) {
+                $message .= ". Solo para usuarios PRO";
+            }
+            $message .= "\n\nTop 20:\n";
             foreach ($songs as $song) {
                 $message .= $song->fulltitle . "\n";
             }
+            $this->comment($message);
             (new TelegramMessageController())->store($message);
         }
     }
@@ -203,11 +209,8 @@ class ReadChart extends Command
         $date = $this->dateConverter($date, $chart->url);
         echo " date  " . $date . PHP_EOL;
         $chart_date = ChartDate::firstOrCreate(['date' => $date, 'chart_id' => $chart->id]);
-        if ($chart_date->wasRecentlyCreated) {
-            (new TelegramMessageController())->store("Agregada la lista $chart->name para la fecha $date");
-        } else {
-            if (env('APP_ENV') !== 'local')
-                return;
+        if (!$chart_date->wasRecentlyCreated && env('APP_ENV') !== 'local') {
+            return;
         }
         $elements = $crawler->filter('.o-chart-results-list-row-container');
         echo "antes" . PHP_EOL;
@@ -265,11 +268,8 @@ class ReadChart extends Command
         else
             $date = Carbon::create(2000)->format('Y-m-d');
         $chart_date = ChartDate::firstOrCreate(['date' => $date, 'chart_id' => $chart->id]);
-        if ($chart_date->wasRecentlyCreated) {
-            (new TelegramMessageController())->store("Agregada la lista $chart->name para la fecha $date");
-        } else {
-            if (env('APP_ENV') != 'local')
-                return;
+        if (!$chart_date->wasRecentlyCreated && env('APP_ENV') != 'local') {
+            return;
         }
         $this->comment("here");
         $elements = $crawler->filter('.o-chart-results-list-row-container');
@@ -341,9 +341,7 @@ class ReadChart extends Command
     {
         $date = $crawler->filter('section.gutter')->filter('form')->filter('input')->attr('value');
         $chart_date = ChartDate::firstOrCreate(['date' => $date, 'chart_id' => $chart->id]);
-        if ($chart_date->wasRecentlyCreated) {
-            (new TelegramMessageController())->store("Agregada la lista $chart->name para la fecha $date. Solo para usuarios PRO");
-        } else {
+        if (!$chart_date->wasRecentlyCreated) {
             return;
         }
         $elements = $crawler->filter('.chart-items');
@@ -398,9 +396,6 @@ class ReadChart extends Command
         $chart_date = ChartDate::firstOrCreate([
                 'date' => $date, 'chart_id' => $chart->id]
         );
-        if ($chart_date->wasRecentlyCreated) {
-            (new TelegramMessageController())->store("Agregada la lista $chart->name para la fecha $date");
-        }
         $this->comment("El chart date tiene id " . $chart_date->id . " y sale con fecha" . $chart_date->date);
         $elements->each(function ($node, $i) use ($chart_date, $chart) {
             if ($i > (str_contains($chart->name, '100 Artistas') ? -1 : 0)) {
@@ -476,35 +471,74 @@ class ReadChart extends Command
 
     public function parseMediatraffic($crawler, $chart): void
     {
-        $elements = $crawler->filter('#AutoNumber3');
-        $subelements = $elements->filter('tr')->filter("td")->filter('tr')->filter('td');
-        //esta es cada una de las posiciones
-        $subelements->each(function ($node, $i) {
-            Log::debug($node->text());
-            $row = $node;
-            $this->comment($row->text());
-            $pos = $row->image()->attr('src');
-            $this->comment($pos);
-        });
-        return;
-        $date = str_replace('Week of ', "", $date);
-        $date = $this->dateConverter($date, $chart->url);
-        $chart_date = ChartDate::firstOrCreate(['date' => $date, 'chart_id' => $chart->id]);
-        if ($chart_date->wasRecentlyCreated) {
-            (new TelegramMessageController())->store("Agregada la lista $chart->name para la fecha $date");
+        // La fecha aparece en la cabecera como "issue date: June 14, 2026"
+        $full = $crawler->text();
+        if (preg_match('/issue date:\s*([A-Za-z]+\s+\d{1,2},\s*\d{4})/i', $full, $m)) {
+            $date = Carbon::parse($m[1])->format('Y-m-d');
         } else {
+            $date = now()->format('Y-m-d');
+        }
+        $this->comment("Mediatraffic fecha: $date");
+
+        $chart_date = ChartDate::firstOrCreate(['date' => $date, 'chart_id' => $chart->id]);
+        if (!$chart_date->wasRecentlyCreated) {
             return;
         }
-        $elements->each(function (Crawler $node, $i) use ($chart_date) {
-            $position = $node->filter(".c-label")->first()->text();
-            $row = $node->filter(".o-chart-results-list-row");
-            $image = $row->filter("li")->filter(".c-lazy-image .lrv-a-crop-1x1")->filter("img")->attr('data-lazy-src');
-            $title = $row->filter("li.lrv-u-width-100p ul li h3")->eq(0)->text();
-            $singer = $row->filter("li.lrv-u-width-100p ul li span")->eq(0)->text();
-            $last = $row->filter("li.lrv-u-width-100p ul li")->eq(3)->text();
-            $peak = $row->filter("li.lrv-u-width-100p ul li")->eq(4)->text();
-            $weeks = $row->filter("li.lrv-u-width-100p ul li")->eq(5)->text();
-            ChartItem::updateOrCreate(
+
+        // Cada canción es un <tr> de la tabla interna de #AutoNumber3
+        $rows = $crawler->filter('#AutoNumber3 table tr');
+        $rows->each(function (Crawler $node, $i) use ($chart_date) {
+            $cells = $node->filter('td');
+            if ($cells->count() < 3) return;
+
+            // Posición a partir del número de la imagen (01.jpg => 1)
+            $posSrc = $cells->eq(0)->filter('img')->count()
+                ? $cells->eq(0)->filter('img')->attr('src')
+                : '';
+            $position = (int)preg_replace('/\D/', '', $posSrc);
+            if ($position < 1) $position = $i + 1;
+            if ($position > 40) return;
+
+            // Celda de stats: "last / peak" + "week N", o imagen new.JPG si es entrada nueva
+            $statsCell = $cells->eq(1);
+            $isNew = $statsCell->filter('img')->count() > 0;
+            $statsText = preg_replace('/\s+/', ' ', $statsCell->text());
+
+            $weeks = preg_match('/week\s*(\d+)/i', $statsText, $w) ? (int)$w[1] : 1;
+
+            if ($isNew) {
+                $last = null;
+                $peak = $position;
+            } elseif (preg_match('#(\d+|-)\s*/\s*(\d+|-)#', $statsText, $lp)) {
+                $last = $lp[1] === '-' ? null : $lp[1];
+                $peak = $lp[2] === '-' ? $position : $lp[2];
+            } else {
+                $last = null;
+                $peak = $position;
+            }
+
+            // Celda de título: el "Título - Artista" va en negrita (puede partirse en
+            // varios <b>); la discográfica y los puntos quedan fuera de la negrita.
+            $titleCell = $cells->eq(2);
+            $boldTexts = $titleCell->filter('b')->each(fn($b) => $b->text());
+            $titleArtist = trim(preg_replace('/\s+/', ' ', implode(' ', $boldTexts)));
+            if ($titleArtist === '') {
+                $titleArtist = trim(preg_replace('/\s+/', ' ', $titleCell->text()));
+            }
+            $parts = explode(' - ', $titleArtist, 2);
+            $title = trim($parts[0]);
+            $singer = isset($parts[1]) ? trim($parts[1]) : $title;
+
+            // Puntos (formato europeo "261.000") guardados como streams
+            $cellText = preg_replace('/\s+/', ' ', $titleCell->text());
+            $streams = 0;
+            if (preg_match_all('/\d{1,3}(?:\.\d{3})+/', $cellText, $pts)) {
+                $streams = (double)str_replace('.', '', end($pts[0]));
+            }
+
+            $image = 'https://img.icons8.com/?size=100&id=63316&format=png&color=000000';
+
+            $chartItem = ChartItem::updateOrCreate(
                 [
                     'chart_date_id' => $chart_date->id,
                     'position' => $position
@@ -515,14 +549,12 @@ class ReadChart extends Command
                     "peak_position" => $peak,
                     "week_on_chart" => $weeks,
                     "image" => $image,
-                    "singer" => $singer
+                    "singer" => $singer,
+                    "streams" => $streams,
                 ]
             );
-            sleep(1);
-//            $this->comment("$position. $title - $singer ($last $peak $weeks)");
+            $this->comment($chartItem->fulltitle);
         });
-//        $this->messagePositions($chart_date);
-
     }
 
 }
