@@ -14,14 +14,21 @@ return new class extends Migration
     ];
 
     /**
-     * Inserta las listas. Es idempotente: solo crea las que no existan ya
-     * (comparando por URL), para no duplicar registros previos.
+     * Inserta las listas. Es idempotente: si ya existe la URL solo corrige el
+     * nombre (no duplica); si no existe, la crea.
      */
     public function up(): void
     {
         $now = now();
         foreach ($this->charts as $chart) {
-            if (DB::table('charts')->where('url', $chart['url'])->exists()) {
+            $existing = DB::table('charts')->where('url', $chart['url'])->first();
+            if ($existing) {
+                if ($existing->name !== $chart['name']) {
+                    DB::table('charts')->where('id', $existing->id)->update([
+                        'name' => $chart['name'],
+                        'updated_at' => $now,
+                    ]);
+                }
                 continue;
             }
             DB::table('charts')->insert([
