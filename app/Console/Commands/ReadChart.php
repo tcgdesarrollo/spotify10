@@ -23,7 +23,7 @@ class ReadChart extends Command
      *
      * @var string
      */
-    protected $signature = 'app:read-chart';
+    protected $signature = 'app:read-chart {chart? : ID de la lista a ejecutar. Si se omite, se ejecutan todas}';
 
     /**
      * The console command description.
@@ -70,6 +70,8 @@ class ReadChart extends Command
             ['name' => 'Pistacubana Top 100 Artistas'],
             ['url' => "https://www.pistacubana.com/lista/artistas100/$week_number_parsed$year/posicion"]
         );
+        // Beatport y MediaTraffic se crean por migración (insert_new_charts), no aquí,
+        // para que un soft delete pueda desactivarlos sin que se vuelvan a crear.
 //
 //        Chart::updateOrCreate(
 //            ['name' => 'Spotify Global México'],
@@ -77,8 +79,31 @@ class ReadChart extends Command
 //        );
 //
 
-        $charts = Chart::all();
+        // Si se pasa un id, solo se ejecuta esa lista; si no, todas.
+        $chartId = $this->argument('chart');
+        $charts = $chartId
+            ? Chart::where('id', $chartId)->get()
+            : Chart::all();
+
+        if ($chartId && $charts->isEmpty()) {
+            $this->error("No existe ninguna lista con id $chartId");
+            return false;
+        }
+
         foreach ($charts as $chart) {
+            // Beatport solo se procesa (y por tanto se envía) los viernes a las 16h,
+            // salvo que se pida explícitamente por id (ejecución manual).
+            // Tiene su propio fetch porque el sitio bloquea el HttpBrowser por defecto.
+            if (str_contains($chart->url, 'beatport')) {
+                if ($chartId || (now()->isFriday() && now()->hour === 16)) {
+                    try {
+                        $this->parseBeatport($chart);
+                    } catch (\Exception $e) {
+                        Log::debug("Error de beatport", [$e->getMessage()]);
+                    }
+                }
+                continue;
+            }
             $this->comment("Comenzando con $chart->name");
             $browser = new HttpBrowser(HttpClient::create());
             try {
@@ -555,6 +580,76 @@ class ReadChart extends Command
             );
             $this->comment($chartItem->fulltitle);
         });
+    }
+
+    /**
+     * Beatport Top 100. Los datos vienen en el JSON embebido (__NEXT_DATA__).
+     * Se busca con el binario curl porque el sitio responde 403 al HttpClient
+     * de Symfony (distinto fingerprint TLS).
+     */
+    public function parseBeatport($chart): void
+    {
+        $html = $this->fetchWithCurl($chart->url);
+        if (!preg_match('#<script id="__NEXT_DATA__"[^>]*>(.*?)</script>#s', $html, $m)) {
+            $this->comment("Beatport: no se pudo leer la página (posible bloqueo)");
+            Log::debug("Beatport sin __NEXT_DATA__");
+            return;
+        }
+        $data = json_decode($m[1], true);
+        $tracks = $data['props']['pageProps']['dehydratedState']['queries'][0]['state']['data']['results'] ?? [];
+        if (empty($tracks)) {
+            $this->comment("Beatport: sin tracks");
+            return;
+        }
+
+        // El Top 100 es una foto del momento; la fechamos con el día actual.
+        $date = now()->format('Y-m-d');
+        $chart_date = ChartDate::firstOrCreate(['date' => $date, 'chart_id' => $chart->id]);
+        if (!$chart_date->wasRecentlyCreated) {
+            return;
+        }
+
+        foreach ($tracks as $i => $track) {
+            $position = $i + 1;
+            if ($position > 100) break;
+
+            $title = trim($track['name'] ?? '');
+            $mix = trim($track['mix_name'] ?? '');
+            if ($mix !== '' && stripos($title, $mix) === false) {
+                $title .= " ($mix)";
+            }
+            $singer = implode(', ', array_map(
+                fn($a) => $a['name'] ?? '',
+                $track['artists'] ?? []
+            ));
+            $image = $track['release']['image']['uri'] ?? ($track['image']['uri'] ?? null);
+
+            $chartItem = ChartItem::updateOrCreate(
+                [
+                    'chart_date_id' => $chart_date->id,
+                    'position' => $position
+                ],
+                [
+                    "title" => $title,
+                    "last_position" => '-',
+                    "peak_position" => '-',
+                    "week_on_chart" => '-',
+                    "image" => $image,
+                    "singer" => $singer,
+                ]
+            );
+            $this->comment($chartItem->fulltitle);
+        }
+    }
+
+    /**
+     * Descarga una URL con el binario curl (User-Agent de navegador).
+     */
+    private function fetchWithCurl(string $url): string
+    {
+        $ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36';
+        $cmd = 'curl -s --compressed -A ' . escapeshellarg($ua) . ' ' . escapeshellarg($url);
+        return (string)shell_exec($cmd);
     }
 
 }
