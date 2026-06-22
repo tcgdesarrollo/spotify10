@@ -46,10 +46,10 @@ class SendTelegram extends Command
             $msg = "$message->description";
             if (env('APP_ENV') != 'prod')
                 $msg = "(PRUEBAS): ". $msg;
-            $sended = (new TelegramController())->sendMessage($msg,'html');
-            if ($sended) {
-                $message->delete();
-            }
+            // Se reclama el mensaje antes de enviarlo para evitar que una
+            // ejecución concurrente lo tome y se envíe dos veces.
+            $message->delete();
+            (new TelegramController())->sendMessage($msg,'html');
             sleep(1);
         }
 
