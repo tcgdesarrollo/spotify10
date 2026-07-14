@@ -8,6 +8,7 @@ use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
 
 class ChartController extends Controller
 {
@@ -20,10 +21,12 @@ class ChartController extends Controller
             'type' => 'nullable|max:100'
         ]);
         $type = $request->type;
-        if (isset($type))
-            $query = Chart::where('name', 'like', "%$type%")->get();
-        else
-            $query = Chart::orderBy('name')->get();
+        // ponytail: TTL cache, no active invalidation. New charts show within 6h; Cache::forget('charts_index_*') in the scraper if instant refresh needed.
+        $query = Cache::remember('charts_index_' . ($type ?? 'all'), now()->addHours(6), function () use ($type) {
+            if (isset($type))
+                return Chart::where('name', 'like', "%$type%")->get();
+            return Chart::orderBy('name')->get();
+        });
         return $this->sendResponse($query);
     }
 
@@ -40,13 +43,15 @@ class ChartController extends Controller
 
     public function show(string $id): Response
     {
-        $chart = Chart::findOrFail($id);
         $me = auth()->user();
-        if ($me->isActive || $me->role_id == 1)
-            $dates = $chart->dates()->latest()->limit(5)->get()->load('items');
-        else
-            $dates = $chart->dates()->latest()->limit(2)->get()->load('items');
-        return $this->sendResponse(['chart' => $chart, 'dates' => $dates]);
+        $limit = ($me->isActive || $me->role_id == 1) ? 5 : 2;
+        // ponytail: TTL cache keyed by chart + tier (2 vs 5 dates). Stale up to 6h; forget "chart_show_{$id}_*" in the scraper for instant refresh.
+        $data = Cache::remember("chart_show_{$id}_{$limit}", now()->addHours(6), function () use ($id, $limit) {
+            $chart = Chart::findOrFail($id);
+            $dates = $chart->dates()->latest()->limit($limit)->get()->load('items');
+            return ['chart' => $chart, 'dates' => $dates];
+        });
+        return $this->sendResponse($data);
     }
 
 
