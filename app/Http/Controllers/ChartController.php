@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ChartRequest;
 use App\Models\Chart;
+use App\Models\ChartItem;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
@@ -41,17 +42,36 @@ class ChartController extends Controller
     }
 
 
-    public function show(string $id): Response
+    public function show(Request $request, string $id): Response
     {
         $me = auth()->user();
         $limit = ($me->isActive || $me->role_id == 1) ? 5 : 2;
         // ponytail: TTL cache keyed by chart + tier (2 vs 5 dates). Stale up to 6h; forget "chart_show_{$id}_*" in the scraper for instant refresh.
+        // Solo metadatos de fechas: los items van aparte, uno por fecha, que es lo unico que muestra el front.
         $data = Cache::remember("chart_show_{$id}_{$limit}", now()->addHours(6), function () use ($id, $limit) {
             $chart = Chart::findOrFail($id);
-            $dates = $chart->dates()->latest()->limit($limit)->get()->load('items');
+            $dates = $chart->dates()->latest()->limit($limit)->get(['id', 'chart_id', 'date']);
             return ['chart' => $chart, 'dates' => $dates];
         });
-        return $this->sendResponse($data);
+
+        $requested = $request->query('date');
+        $date_id = $requested ?: $data['dates']->first()?->id;
+
+        // El limite de fechas es el muro de pago: no servir una fecha fuera de las permitidas.
+        if ($date_id !== null && !$data['dates']->contains('id', $date_id))
+            abort(403);
+
+        // Una fecha ya publicada no cambia nunca, se puede cachear largo.
+        $items = $date_id === null ? [] : Cache::remember(
+            "chart_date_items_$date_id",
+            now()->addDays(30),
+            fn() => ChartItem::where('chart_date_id', $date_id)->orderBy('position')->get()
+        );
+
+        if ($requested)
+            return $this->sendResponse(['items' => $items]);
+
+        return $this->sendResponse($data + ['items' => $items]);
     }
 
 

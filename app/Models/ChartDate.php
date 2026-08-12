@@ -10,7 +10,8 @@ class ChartDate extends Model
 {
     protected $guarded = ['id'];
     protected $hidden = ['created_at', 'updated_at'];
-    protected $appends = ['fullname'];
+    // ponytail: fullname NO va en $appends: dispara una query por fecha al serializar.
+    // Solo lo usa ReadChart, que lo pide explicito ($chart_date->fullname).
 
 
     public function items()
