@@ -10,6 +10,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class ChartController extends Controller
 {
@@ -72,6 +73,53 @@ class ChartController extends Controller
             return $this->sendResponse(['items' => $items]);
 
         return $this->sendResponse($data + ['items' => $items]);
+    }
+
+
+
+    // Top 100 anual: cada semana una cancion suma (101 - posicion) puntos.
+    // El anio de listas va del 15 de noviembre del anio anterior al 14 de noviembre, como Billboard.
+    public function annual(Request $request, string $id): Response
+    {
+        $request->validate(['year' => 'nullable|integer|min:2000|max:2100']);
+        $chart = Chart::findOrFail($id);
+
+        $dates = Cache::remember("chart_annual_years_$id", now()->addHours(6), fn() => $chart->dates()
+            ->pluck('date')
+            ->filter(fn($date) => preg_match('/^\d{4}-\d{2}-\d{2}$/', $date))
+            ->map(fn($date) => (int)substr($date, 0, 4) + (substr($date, 5) >= '11-15' ? 1 : 0))
+            ->unique()->sortDesc()->values());
+
+        $year = (int)($request->year ?: $dates->first() ?: now()->year);
+        $from = ($year - 1) . '-11-15';
+        $to = $year . '-11-14';
+
+        $items = Cache::remember("chart_annual_{$id}_$year", now()->addHours(6), fn() => ChartItem::query()
+            ->join('chart_dates', 'chart_dates.id', '=', 'chart_items.chart_date_id')
+            ->where('chart_dates.chart_id', $chart->id)
+            ->whereBetween('chart_dates.date', [$from, $to])
+            ->whereBetween('chart_items.position', [1, 100])
+            ->groupBy('chart_items.title', 'chart_items.singer')
+            ->orderByDesc('points')
+            ->orderBy('peak')
+            ->limit(100)
+            ->get([
+                'chart_items.title',
+                'chart_items.singer',
+                DB::raw('MAX(chart_items.image) as image'),
+                DB::raw('SUM(101 - chart_items.position) as points'),
+                DB::raw('COUNT(*) as weeks'),
+                DB::raw('MIN(chart_items.position) as peak'),
+            ]));
+
+        return $this->sendResponse([
+            'chart' => $chart,
+            'year' => $year,
+            'years' => $dates,
+            'from' => $from,
+            'to' => $to,
+            'items' => $items,
+        ]);
     }
 
 

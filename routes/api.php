@@ -35,6 +35,7 @@ Route::middleware('auth:sanctum')->get('user/me', function (Request $request) {
 });
 Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::get('user/logout', [AuthController::class, 'logout']);
+    Route::get('charts/{id}/annual', [ChartController::class, 'annual']);
     Route::apiResources([
         'charts' => ChartController::class,
         'chart-item' => ChartItemController::class,
