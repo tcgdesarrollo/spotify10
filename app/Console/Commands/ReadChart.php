@@ -62,11 +62,11 @@ class ReadChart extends Command
         $year = now()->month == 12 ? now()->year + 1 : now()->year;
         $this->comment("https://www.pistacubana.com/lista/top100/$week_number_parsed$year/posicion");
 
-        Chart::updateOrCreate(
+        Chart::withTrashed()->updateOrCreate(
             ['name' => 'Pistacubana Top 100'],
             ['url' => "https://www.pistacubana.com/lista/top100/$week_number_parsed$year/posicion"]
         );
-        Chart::updateOrCreate(
+        Chart::withTrashed()->updateOrCreate(
             ['name' => 'Pistacubana Top 100 Artistas'],
             ['url' => "https://www.pistacubana.com/lista/artistas100/$week_number_parsed$year/posicion"]
         );

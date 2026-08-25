@@ -23,8 +23,9 @@ class ChartController extends Controller
             'type' => 'nullable|max:100'
         ]);
         $type = $request->type;
-        // ponytail: TTL cache, no active invalidation. New charts show within 6h; Cache::forget('charts_index_*') in the scraper if instant refresh needed.
-        $query = Cache::remember('charts_index_' . ($type ?? 'all'), now()->addHours(6), function () use ($type) {
+        // La version invalida el cache entero al crear/editar/borrar una lista, sin tener que
+        // conocer las claves por tipo (el driver es file, no hay tags).
+        $query = Cache::remember('charts_index_' . $this->chartsVersion() . '_' . ($type ?? 'all'), now()->addHours(6), function () use ($type) {
             if (isset($type))
                 return Chart::where('name', 'like', "%$type%")->get();
             return Chart::orderBy('name')->get();
@@ -33,12 +34,25 @@ class ChartController extends Controller
     }
 
 
+    private function chartsVersion(): int
+    {
+        return (int)Cache::get('charts_version', 1);
+    }
+
+    private function forgetCharts(): void
+    {
+        Cache::forever('charts_version', $this->chartsVersion() + 1);
+    }
+
+
     public function store(ChartRequest $request): Application|Response|\Illuminate\Contracts\Foundation\Application|ResponseFactory
     {
-        $chart = Chart::updateOrCreate(
+        // withTrashed: si la lista existia y se borro, se reusa esa fila en vez de duplicar la url.
+        $chart = Chart::withTrashed()->updateOrCreate(
             ['url' => $request->url],
-            ['name' => $request->name]
+            ['name' => $request->name, 'deleted_at' => null]
         );
+        $this->forgetCharts();
         return $this->sendResponse($chart->fresh(), 201);
     }
 
@@ -127,6 +141,7 @@ class ChartController extends Controller
     {
         $chart = Chart::findOrFail($id);
         $chart->update($request->all());
+        $this->forgetCharts();
         return $this->sendResponse($chart->fresh());
     }
 
@@ -134,6 +149,7 @@ class ChartController extends Controller
     {
         $chart = Chart::findOrFail($id);
         $chart->delete();
+        $this->forgetCharts();
         return $this->sendResponse("ok", 204);
     }
 }
